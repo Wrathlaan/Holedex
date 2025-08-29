@@ -7,6 +7,7 @@ import Navigation from './components/Navigation';
 import PokemonGrid from './components/PokemonGrid';
 import Profile from './components/Profile';
 import Settings from './components/Settings';
+import NewsFeed from './components/NewsFeed';
 import { Pokemon } from './types';
 import { POKEMON_LIST_KANTO, POKEMON_LIST_ALL } from './data/pokemon';
 
@@ -25,73 +26,6 @@ const REGION_RANGES: { [key: string]: { start: number; end: number } } = {
 };
 
 export const FETCHABLE_REGIONS = ['Johto', 'Hoenn', 'Sinnoh', 'Unova', 'Kalos', 'Alola', 'Galar', 'Hisui', 'Paldea'];
-
-const newsItems = [
-    {
-        category: 'Game Announcement',
-        title: 'Pokémon Legends: Z-A Arrives in 2025!',
-        description: 'A new adventure awaits in Lumiose City! Pokémon Legends: Z-A, an ambitious new entry to the Pokémon series, will be released on Nintendo Switch in 2025.',
-        timestamp: 'Feb 27, 2024',
-        image: 'https://pbs.twimg.com/media/GHW-cT0XoAAXlGq?format=jpg&name=large',
-        link: 'https://www.youtube.com/watch?v=5_qDb2y06s4',
-    },
-    {
-        category: 'Animation',
-        title: 'Pokémon Horizons: The Series Now on Netflix',
-        description: 'The new Pokémon animated adventure has arrived! Follow Liko and Roy as they uncover the mysteries of the Pokémon world.',
-        timestamp: 'Mar 7, 2024',
-        image: 'https://pbs.twimg.com/media/GH_930UWAAAXs1s?format=jpg&name=large',
-        link: 'https://www.netflix.com/title/81722339',
-    },
-    {
-        category: 'App Announcement',
-        title: 'Introducing Pokémon TCG Pocket',
-        description: 'Collect, trade, and battle with digital cards in Pokémon Trading Card Game Pocket, an upcoming app for iOS and Android devices, launching in 2024.',
-        timestamp: 'Feb 27, 2024',
-        image: 'https://pbs.twimg.com/media/GHXDjBPaMAABqgf?format=jpg&name=large',
-        link: 'https://www.youtube.com/watch?v=M53n_v_e7kg',
-    },
-    {
-        category: 'Esports',
-        title: 'Worlds 2024 Heads to Honolulu!',
-        description: 'The 2024 Pokémon World Championships will be held in Honolulu, Hawaiʻi from August 16–18! Get ready for a heated competition.',
-        timestamp: 'Apr 5, 2024',
-        image: 'https://pbs.twimg.com/media/GKb0gWKa0AEs9yY?format=jpg&name=large',
-        link: 'https://x.com/Pokemon/status/1776261298492063855',
-    },
-    {
-        category: 'Community Event',
-        title: 'Pokémon GO Fest 2024: Global Details',
-        description: 'Join millions of Trainers for Pokémon GO Fest: Global on July 13 and 14, featuring the debut of the Mythical Pokémon Marshadow!',
-        timestamp: 'May 1, 2024',
-        image: 'https://pbs.twimg.com/media/GMfV6Q1XoAA2FNo?format=jpg&name=large',
-        link: 'https://gofest.pokemongolive.com/',
-    },
-];
-
-const NewsFeed = () => {
-  return (
-    <aside className="panel news-panel" aria-labelledby="news-title">
-      <h2 id="news-title">Holo-Net News</h2>
-      <div className="news-feed-content">
-        {newsItems.map((item, index) => (
-          <article key={index} className="news-item" aria-labelledby={`news-title-${index}`}>
-            <img src={item.image} alt="" className="news-item-image" />
-            <div className="news-item-header">
-              <span className="news-item-category">{item.category}</span>
-              <span className="news-item-timestamp">{item.timestamp}</span>
-            </div>
-            <h3 id={`news-title-${index}`} className="news-item-title">{item.title}</h3>
-            <p className="news-item-description">{item.description}</p>
-            <a href={item.link} target="_blank" rel="noopener noreferrer" className="news-item-link">
-              Read More &rarr;
-            </a>
-          </article>
-        ))}
-      </div>
-    </aside>
-  );
-};
 
 interface TopBarProps {
   onOpenSettings: () => void;

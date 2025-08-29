@@ -8,3 +8,13 @@ export interface Pokemon {
   name: string;
   types: string[];
 }
+
+export interface NewsItem {
+  category: string;
+  title: string;
+  description: string;
+  timestamp: string;
+  image: string;
+  imageAlt: string;
+  link: string;
+}
