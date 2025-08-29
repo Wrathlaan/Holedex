@@ -21,10 +21,14 @@ interface Stat {
   base_stat: number;
 }
 
+// Updated interface to include evolution method for each subsequent node
 interface EvolutionNode {
   speciesName: string;
   pokemonId: number;
-  evolutions: EvolutionNode[];
+  evolutions: {
+    node: EvolutionNode;
+    method: string;
+  }[];
 }
 
 const SPRITE_BASE_URL = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/';
@@ -110,6 +114,7 @@ const StatsRadar = ({ stats, typeColor }: StatsRadarProps) => {
   );
 };
 
+// Rewritten EvolutionChainNode component for detailed, branching chains
 const EvolutionChainNode: React.FC<{
   node: EvolutionNode;
   currentPokemonId: number;
@@ -126,7 +131,7 @@ const EvolutionChainNode: React.FC<{
   };
 
   return (
-    <div className="evolution-path">
+    <div className="evolution-stage-group">
       <div
         className={`evolution-stage ${currentPokemonId === node.pokemonId ? 'active' : ''}`}
         onClick={handleSelect}
@@ -140,25 +145,73 @@ const EvolutionChainNode: React.FC<{
       </div>
 
       {node.evolutions.length > 0 && (
-        <>
-          <svg className="evolution-arrow" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z" /></svg>
-          <div className="evolution-branches">
-            {node.evolutions.map(evo => (
+        <div className="evolution-connector-group">
+          {node.evolutions.map(({ node: evoNode, method }) => (
+            <div className="evolution-path" key={evoNode.pokemonId}>
+              <div className="evolution-connector">
+                <div className="evolution-method">{method}</div>
+                <svg className="evolution-arrow" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z" />
+                </svg>
+              </div>
               <EvolutionChainNode
-                key={evo.pokemonId}
-                node={evo}
+                node={evoNode}
                 currentPokemonId={currentPokemonId}
                 onPokemonSelect={onPokemonSelect}
                 pokemonList={pokemonList}
               />
-            ))}
-          </div>
-        </>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
 };
 
+// Helper function to format API names into human-readable strings
+const formatName = (name: string): string =>
+  name.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+// Helper function to parse evolution details into a concise string
+const getEvolutionMethod = (details: any[]): string => {
+  if (!details || details.length === 0) return '';
+  const detail = details[0];
+
+  const trigger = detail.trigger.name;
+  const parts: string[] = [];
+
+  switch (trigger) {
+    case 'level-up':
+      if (detail.min_level) {
+        parts.push(`Lvl ${detail.min_level}`);
+      } else {
+        parts.push('Level Up');
+      }
+      break;
+    case 'use-item':
+      parts.push(`Use ${formatName(detail.item.name)}`);
+      break;
+    case 'trade':
+      parts.push('Trade');
+      break;
+    case 'shed':
+      return 'Special';
+    default:
+      parts.push(formatName(trigger));
+  }
+  
+  if (detail.held_item) {
+    parts.push(`w/ ${formatName(detail.held_item.name)}`);
+  }
+  if (detail.min_happiness) {
+    parts.push('w/ Friendship');
+  }
+  if (detail.time_of_day) {
+    parts.push(`at ${detail.time_of_day}`);
+  }
+
+  return parts.join(' ');
+};
 
 const Profile = ({ pokemon, pokemonStatuses, onToggleStatus, favorites, onToggleFavorite, onPokemonSelect, pokemonList, onClose }: ProfileProps) => {
   // State for the Pokémon currently being displayed and animated
@@ -262,15 +315,30 @@ const Profile = ({ pokemon, pokemonStatuses, onToggleStatus, favorites, onToggle
           const evolutionResponse = await fetch(`${CORS_PROXY}${evolutionChainUrl}`, { signal });
           if (evolutionResponse.ok && !signal.aborted) {
             const evolutionData = await evolutionResponse.json();
+            
             const parseNode = (node: any): EvolutionNode | null => {
               const name = node.species.name;
-              const foundPokemon = pokemonList.find(p => p.name === name);
+              let foundPokemon = pokemonList.find(p => p.name === name);
+
+              // If not found, try matching against the start of the name for formes
+              // e.g., API gives 'wormadam', local data is 'wormadam-plant'
+              if (!foundPokemon) {
+                foundPokemon = pokemonList.find(p => p.name.startsWith(name + '-'));
+              }
+              
               if (!foundPokemon) return null;
 
               return {
                 speciesName: name,
                 pokemonId: foundPokemon.id,
-                evolutions: node.evolves_to.map(parseNode).filter((n): n is EvolutionNode => n !== null),
+                evolutions: node.evolves_to.map((evo: any) => {
+                  const nextNode = parseNode(evo);
+                  if (!nextNode) return null;
+                  return {
+                    node: nextNode,
+                    method: getEvolutionMethod(evo.evolution_details),
+                  };
+                }).filter((n): n is { node: EvolutionNode; method: string } => n !== null),
               };
             };
             parsedChain = parseNode(evolutionData.chain);

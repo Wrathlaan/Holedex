@@ -38,7 +38,24 @@ const Navigation = ({
 
   return (
     <aside className="panel nav-panel" aria-labelledby="nav-title">
-      <h2 id="nav-title">Regions</h2>
+      <h2 id="nav-title">Navigation</h2>
+      
+      <div className="region-selector-container">
+        <label htmlFor="region-select" className="sr-only">Select Region</label>
+        <select
+          id="region-select"
+          className="region-select"
+          value={currentRegion}
+          onChange={(e) => onRegionChange(e.target.value)}
+          aria-label="Select Pokémon Region"
+        >
+          {REGIONS.map((region) => (
+            <option key={region} value={region}>
+              {region}
+            </option>
+          ))}
+        </select>
+      </div>
 
       <div className="progress-tracker">
         <div className="progress-header">
@@ -59,25 +76,6 @@ const Navigation = ({
         </div>
       </div>
 
-      <nav className="nav-tabs-container" aria-label="Pokémon Regions">
-        {REGIONS.map((region) => (
-          <div
-            key={region}
-            className={`nav-tab ${currentRegion === region ? 'active' : ''}`}
-            role="tab"
-            tabIndex={0}
-            aria-selected={currentRegion === region}
-            onClick={() => onRegionChange(region)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                onRegionChange(region);
-              }
-            }}
-          >
-            {region}
-          </div>
-        ))}
-      </nav>
       <div className="nav-panel-scrollable-content">
         <h3 className="filter-title">Filter by Type</h3>
         <div className="type-filter-grid">

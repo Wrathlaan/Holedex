@@ -8,7 +8,8 @@ import PokemonGrid from './components/PokemonGrid';
 import Profile from './components/Profile';
 import Settings from './components/Settings';
 import NewsFeed from './components/NewsFeed';
-import { Pokemon } from './types';
+import ThemeEditor from './components/ThemeEditor';
+import { Pokemon, Theme } from './types';
 import { POKEMON_LIST_KANTO, POKEMON_LIST_ALL } from './data/pokemon';
 
 
@@ -27,13 +28,45 @@ const REGION_RANGES: { [key: string]: { start: number; end: number } } = {
 
 export const FETCHABLE_REGIONS = ['Johto', 'Hoenn', 'Sinnoh', 'Unova', 'Kalos', 'Alola', 'Galar', 'Hisui', 'Paldea'];
 
+const DEFAULT_THEME: Theme = {
+  '--font-family': `'Roboto', sans-serif`,
+  '--background-image-url': `url('https://www.transparenttextures.com/patterns/cubes.png')`,
+  '--background-dark': '#0d1117',
+  '--panel-dark': '#161b22',
+  '--panel-light': '#21262d',
+  '--text-primary': '#e6edf3',
+  '--text-secondary': '#8b949e',
+  '--border-color': '#30363d',
+  '--accent-color': '#58a6ff',
+  '--accent-color-translucent': 'rgba(88, 166, 255, 0.3)',
+  '--type-normal': '#A8A77A',
+  '--type-fire': '#EE8130',
+  '--type-water': '#6390F0',
+  '--type-electric': '#F7D02C',
+  '--type-grass': '#7AC74C',
+  '--type-ice': '#96D9D6',
+  '--type-fighting': '#C22E28',
+  '--type-poison': '#A33EA1',
+  '--type-ground': '#E2BF65',
+  '--type-flying': '#A98FF3',
+  '--type-psychic': '#F95587',
+  '--type-bug': '#A6B91A',
+  '--type-rock': '#B6A136',
+  '--type-ghost': '#735797',
+  '--type-dragon': '#6F35FC',
+  '--type-dark': '#705746',
+  '--type-steel': '#B7B7CE',
+  '--type-fairy': '#D685AD',
+};
+
 interface TopBarProps {
   onOpenSettings: () => void;
+  onOpenThemeEditor: () => void;
   isShinyMode: boolean;
   onToggleShinyMode: () => void;
 }
 
-const TopBar = ({ onOpenSettings, isShinyMode, onToggleShinyMode }: TopBarProps) => {
+const TopBar = ({ onOpenSettings, onOpenThemeEditor, isShinyMode, onToggleShinyMode }: TopBarProps) => {
   return (
     <header className="top-bar">
       <div className="top-bar-actions-left">
@@ -50,7 +83,12 @@ const TopBar = ({ onOpenSettings, isShinyMode, onToggleShinyMode }: TopBarProps)
         </button>
         <button onClick={onOpenSettings} className="settings-icon-btn" aria-label="Open Settings">
           <svg className="settings-icon-svg" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z" />
+            <path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69.98l2.49 1c.23.09.49 0 .61.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z" />
+          </svg>
+        </button>
+        <button onClick={onOpenThemeEditor} className="theme-icon-btn" aria-label="Open Theme Editor">
+          <svg className="theme-icon-svg" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"></path>
           </svg>
         </button>
       </div>
@@ -75,6 +113,8 @@ const App = () => {
   const [favorites, setFavorites] = useState<number[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isThemeEditorOpen, setIsThemeEditorOpen] = useState(false);
+  const [theme, setTheme] = useState<Theme>(DEFAULT_THEME);
   const [pokemonList, setPokemonList] = useState<Pokemon[]>([]);
   const [isAllDataFetched, setIsAllDataFetched] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -88,6 +128,13 @@ const App = () => {
   }, {} as Record<string, RegionFetchState>);
 
   const [regionFetchStates, setRegionFetchStates] = useState<Record<string, RegionFetchState>>(initialRegionFetchStates);
+
+  // Effect to apply the current theme to the document root
+  useEffect(() => {
+    for (const [key, value] of Object.entries(theme)) {
+      document.documentElement.style.setProperty(key, value);
+    }
+  }, [theme]);
 
   useEffect(() => {
     setIsLoading(true);
@@ -150,6 +197,10 @@ const App = () => {
 
   const handleToggleShinyMode = () => {
     setIsShinyMode(prev => !prev);
+  };
+
+  const handleApplyTheme = (newTheme: Theme) => {
+    setTheme(newTheme);
   };
 
   // Core data fetching logic. It's idempotent and can be safely called multiple times.
@@ -248,6 +299,7 @@ const App = () => {
     <>
       <TopBar
         onOpenSettings={() => setIsSettingsOpen(true)}
+        onOpenThemeEditor={() => setIsThemeEditorOpen(true)}
         isShinyMode={isShinyMode}
         onToggleShinyMode={handleToggleShinyMode}
       />
@@ -299,6 +351,12 @@ const App = () => {
         isFetchingAll={isFetchingAll}
         onFetchRegionData={handleFetchRegionData}
         regionFetchStates={regionFetchStates}
+      />
+      <ThemeEditor
+        isOpen={isThemeEditorOpen}
+        onClose={() => setIsThemeEditorOpen(false)}
+        currentTheme={theme}
+        onApplyTheme={handleApplyTheme}
       />
     </>
   );

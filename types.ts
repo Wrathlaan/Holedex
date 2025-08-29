@@ -18,3 +18,7 @@ export interface NewsItem {
   imageAlt: string;
   link: string;
 }
+
+export type Theme = {
+  [key: string]: string;
+};
