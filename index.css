@@ -37,6 +37,8 @@
   --glow-color: rgba(88, 166, 255, 0.225);
   --modal-glow-color: rgba(88, 166, 255, 0.3);
   --shiny-glow-color: #FFD700;
+  --team-builder-color: #e04b44;
+  --battle-sim-color: #5cb85c;
 
   /* Type Colors for Glow Effect */
   --type-normal: #A8A77A;
@@ -101,7 +103,12 @@ body {
   overflow: hidden;
 }
 
-/* Top Bar */
+/* --- Top Bar --- */
+@keyframes text-shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
 .top-bar {
   background-color: var(--glass-bg-container);
   backdrop-filter: var(--glass-backdrop-blur);
@@ -111,9 +118,22 @@ body {
   border: var(--glass-border);
   box-shadow: var(--glass-shadow);
   flex-shrink: 0;
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  display: flex;
+  justify-content: space-between;
   align-items: center;
+}
+
+.top-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.top-bar-logo {
+  width: 32px;
+  height: 32px;
+  fill: var(--accent-color);
+  filter: drop-shadow(0 0 4px var(--accent-color));
 }
 
 .top-bar-title {
@@ -121,20 +141,88 @@ body {
   font-weight: 500;
   color: var(--text-primary);
   text-shadow: 0 0 5px var(--accent-color-translucent);
-  justify-self: center;
 }
 
-.top-bar-actions-left {
-  justify-self: start;
+.top-bar-title-text {
+  background: linear-gradient(90deg, var(--text-secondary), var(--text-primary), var(--accent-color), var(--text-primary), var(--text-secondary));
+  background-size: 200% auto;
+  color: transparent;
+  background-clip: text;
+  -webkit-background-clip: text;
+  animation: text-shimmer 8s linear infinite;
+}
+
+.top-bar-right {
   display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.top-bar-modes {
+  display: flex;
+  align-items: center;
   gap: 0.5rem;
 }
 
-.top-bar-actions-right {
-  justify-self: end;
+.top-bar-divider {
+  width: 1px;
+  height: 24px;
+  background-color: var(--border-color);
 }
 
-.settings-icon-btn, .theme-icon-btn {
+.top-bar-tools {
+  display: flex;
+  align-items: center;
+}
+
+.mode-btn {
+  position: relative;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: color 0.2s ease;
+  border-radius: var(--glass-radius);
+}
+
+.mode-btn::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 15%;
+  width: 70%;
+  height: 2px;
+  background-color: var(--active-color);
+  transform: scaleX(0);
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.mode-btn:hover {
+  color: var(--text-primary);
+}
+
+.mode-btn:hover::after {
+  transform: scaleX(1);
+}
+
+.mode-btn.active {
+  color: var(--active-color);
+}
+
+.mode-btn.active::after {
+  transform: scaleX(1);
+}
+
+.mode-btn.pokedex { --active-color: var(--accent-color); }
+.mode-btn.shiny-hunting { --active-color: var(--shiny-glow-color); }
+.mode-btn.team-builder { --active-color: var(--team-builder-color); }
+.mode-btn.battle-sim { --active-color: var(--battle-sim-color); }
+
+
+.icon-btn {
   background: none;
   border: none;
   cursor: pointer;
@@ -143,11 +231,16 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
 }
-.settings-icon-btn:hover, .theme-icon-btn:hover {
+.icon-btn:hover {
   background-color: var(--panel-light);
   box-shadow: 0 0 10px var(--accent-color-translucent);
+}
+
+.icon-btn:active {
+  transform: scale(0.95);
+  background-color: var(--panel-dark);
 }
 
 .settings-icon-svg {
@@ -156,7 +249,7 @@ body {
   fill: var(--text-secondary);
   transition: fill 0.2s ease, transform 0.3s ease;
 }
-.settings-icon-btn:hover .settings-icon-svg {
+.icon-btn:hover .settings-icon-svg {
   fill: var(--text-primary);
   transform: rotate(45deg);
 }
@@ -167,11 +260,10 @@ body {
   fill: var(--text-secondary);
   transition: fill 0.2s ease, transform 0.3s ease;
 }
-.theme-icon-btn:hover .theme-icon-svg {
+.icon-btn:hover .theme-icon-svg {
   fill: var(--text-primary);
   transform: scale(1.1) rotate(-15deg);
 }
-
 
 .shiny-toggle-btn {
   background: none;
@@ -182,12 +274,17 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
 }
 
 .shiny-toggle-btn:hover {
   background-color: var(--panel-light);
   box-shadow: 0 0 10px var(--accent-color-translucent);
+}
+
+.shiny-toggle-btn:active {
+  transform: scale(0.95);
+  background-color: var(--panel-dark);
 }
 
 .shiny-toggle-svg {
@@ -433,7 +530,7 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  padding: 1rem 0.5rem;
+  padding: 1rem 0.5rem 2rem;
   border: var(--glass-border);
   border-radius: var(--glass-radius);
   cursor: pointer;
@@ -492,8 +589,8 @@ body {
 
 .status-icon-card {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  bottom: 4px;
+  right: 4px;
   width: 24px;
   height: 24px;
   cursor: pointer;
@@ -700,6 +797,38 @@ body {
   font-weight: 500;
 }
 
+.profile-form-selector {
+  margin-top: 0.75rem;
+  margin-bottom: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.profile-form-selector select {
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--glass-radius);
+  border: var(--glass-border);
+  background-color: var(--glass-bg-interactive);
+  backdrop-filter: var(--glass-backdrop-blur);
+  -webkit-backdrop-filter: var(--glass-backdrop-blur);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  cursor: pointer;
+}
+
+.profile-form-selector select:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 8px var(--accent-color-translucent);
+  background-color: var(--glass-bg-interactive-focus);
+}
+
 .profile-types {
   display: flex;
   justify-content: center;
@@ -721,39 +850,6 @@ body {
   color: var(--text-secondary);
   line-height: 1.6;
   width: 100%;
-}
-
-.profile-tabs {
-  display: flex;
-  justify-content: center;
-  gap: 0.5rem;
-  width: 100%;
-  margin-top: 1.5rem;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.profile-tab {
-  padding: 0.5rem 1rem;
-  border-radius: 5px 5px 0 0;
-  cursor: pointer;
-  font-weight: 500;
-  color: var(--text-secondary);
-  border: 1px solid transparent;
-  border-bottom: none;
-  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
-  position: relative;
-  bottom: -1px;
-}
-
-.profile-tab:hover {
-  background-color: var(--panel-light);
-  color: var(--text-primary);
-}
-
-.profile-tab.active {
-  color: var(--accent-color);
-  background-color: var(--panel-dark);
-  border-color: var(--border-color);
 }
 
 .stats-radar-container {
@@ -789,16 +885,24 @@ body {
 }
 
 .radar-label {
-  font-size: 10px;
-  fill: var(--text-secondary);
+  font-size: 11px;
   font-weight: 500;
+}
+
+.radar-label-name {
+  fill: var(--text-secondary);
+}
+
+.radar-label-value {
+  fill: var(--text-primary);
+  font-weight: bold;
 }
 
 /* Favorite Icons */
 .favorite-icon-card {
   position: absolute;
-  top: 8px;
-  left: 8px;
+  bottom: 4px;
+  left: 4px;
   width: 24px;
   height: 24px;
   cursor: pointer;
@@ -863,7 +967,8 @@ body {
   padding: 1rem 0;
 }
 
-/* Evolution Chain */
+/* Evolution & Stats Sections */
+.stats-section,
 .evolution-section {
   width: 100%;
   margin-top: 1.5rem;
@@ -871,6 +976,7 @@ body {
   border-top: 1px solid var(--border-color);
 }
 
+.stats-title,
 .evolution-title {
   font-size: 1rem;
   font-weight: 500;
@@ -1128,6 +1234,12 @@ body {
   border-radius: var(--glass-radius);
   border: var(--glass-border);
   box-shadow: var(--glass-modal-shadow);
+}
+
+/* Profile Modal Specific Styles */
+.modal-container.profile-modal {
+  height: calc(100vh - 2rem);
+  max-height: calc(100vh - 2rem); /* Override default max-height and fix height */
 }
 
 .modal-close-button {
@@ -1463,6 +1575,34 @@ body {
 .theme-editor-btn.secondary[disabled] {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* --- Placeholder View --- */
+.placeholder-view {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 1rem;
+  background-color: var(--glass-bg-container);
+  backdrop-filter: var(--glass-backdrop-blur);
+  -webkit-backdrop-filter: var(--glass-backdrop-blur);
+  border-radius: var(--glass-radius);
+  border: var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+.placeholder-view-title {
+  font-size: 2rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.placeholder-view-description {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
 }
 
 /* --- UI POLISH & ANIMATIONS --- */

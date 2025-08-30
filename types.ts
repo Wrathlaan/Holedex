@@ -22,3 +22,5 @@ export interface NewsItem {
 export type Theme = {
   [key: string]: string;
 };
+
+export type AppMode = 'pokedex' | 'shiny-hunting' | 'team-builder' | 'battle-sim';

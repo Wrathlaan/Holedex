@@ -3,15 +3,16 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import React, { useState, useEffect } from 'react';
-import Navigation from './components/Navigation';
-import PokemonGrid from './components/PokemonGrid';
+import TopBar from './components/TopBar';
+import PokedexView from './modes/pokedex/PokedexView';
+import ShinyHuntingView from './modes/shiny_hunting/ShinyHuntingView';
+import TeamBuilderView from './modes/team_builder/TeamBuilderView';
+import BattleSimView from './modes/battle_sim/BattleSimView';
 import Profile from './components/Profile';
 import Settings from './components/Settings';
-import NewsFeed from './components/NewsFeed';
 import ThemeEditor from './components/ThemeEditor';
-import { Pokemon, Theme } from './types';
+import { Pokemon, Theme, AppMode } from './types';
 import { POKEMON_LIST_KANTO, POKEMON_LIST_ALL } from './data/pokemon';
-
 
 const REGION_RANGES: { [key: string]: { start: number; end: number } } = {
   'Kanto': { start: 1, end: 151 },
@@ -62,74 +63,40 @@ const DEFAULT_THEME: Theme = {
   '--type-fairy': '#D685AD',
 };
 
-interface TopBarProps {
-  onOpenSettings: () => void;
-  onOpenThemeEditor: () => void;
-  isShinyMode: boolean;
-  onToggleShinyMode: () => void;
-}
-
-const TopBar = ({ onOpenSettings, onOpenThemeEditor, isShinyMode, onToggleShinyMode }: TopBarProps) => {
-  return (
-    <header className="top-bar">
-      <div className="top-bar-actions-left">
-        <button
-          onClick={onToggleShinyMode}
-          className={`shiny-toggle-btn ${isShinyMode ? 'active' : ''}`}
-          aria-label="Toggle Shiny Mode for Grid"
-          title="Toggle Shiny Mode for Grid"
-        >
-          <svg className="shiny-toggle-svg" viewBox="0 0 24 24">
-            <title>Toggle Shiny Mode</title>
-            <path d="M12 2 L14.5 9.5 L22 12 L14.5 14.5 L12 22 L9.5 14.5 L2 12 L9.5 9.5 Z" />
-          </svg>
-        </button>
-        <button onClick={onOpenSettings} className="settings-icon-btn" aria-label="Open Settings">
-          <svg className="settings-icon-svg" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M19.47,13.24c0.04-0.3,0.07-0.61,0.07-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.44,0.17-0.48,0.41L9.12,5.25C8.53,5.5,8,5.82,7.5,6.2l-2.39-0.96c-0.22-0.08-0.47,0-0.59,0.22L2.6,8.77 c-0.11,0.2-0.06,0.47,0.12,0.61l2.03,1.58C4.7,11.36,4.68,11.68,4.68,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.48,2.44 c0.04,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.48-0.41l0.48-2.44c0.59-0.24,1.12-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.11-0.2,0.06-0.47-0.12-0.61L19.47,13.24z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"></path>
-          </svg>
-        </button>
-        <button onClick={onOpenThemeEditor} className="theme-icon-btn" aria-label="Open Theme Editor">
-          <svg className="theme-icon-svg" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"></path>
-          </svg>
-        </button>
-      </div>
-      <h1 className="top-bar-title">Holo-Grid Pokédex</h1>
-      <div className="top-bar-actions-right">
-        {/* Placeholder for future icons */}
-      </div>
-    </header>
-  );
-};
-
 interface RegionFetchState {
   isFetched: boolean;
   isFetching: boolean;
 }
 
 const App = () => {
-  const [selectedPokemon, setSelectedPokemon] = useState<Pokemon | null>(null);
-  const [currentRegion, setCurrentRegion] = useState<string>('Kanto');
-  const [pokemonStatuses, setPokemonStatuses] = useState<Record<number, 'seen' | 'caught'>>({});
-  const [activeTypes, setActiveTypes] = useState<string[]>([]);
-  const [favorites, setFavorites] = useState<number[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isThemeEditorOpen, setIsThemeEditorOpen] = useState(false);
+  // Global State
   const [theme, setTheme] = useState<Theme>(DEFAULT_THEME);
   const [pokemonList, setPokemonList] = useState<Pokemon[]>([]);
-  const [isAllDataFetched, setIsAllDataFetched] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isFetchingAll, setIsFetchingAll] = useState(false);
+  const [pokemonStatuses, setPokemonStatuses] = useState<Record<number, 'seen' | 'caught'>>({});
+  const [favorites, setFavorites] = useState<number[]>([]);
   const [isShinyMode, setIsShinyMode] = useState(false);
+  
+  // App Mode State
+  const [currentMode, setCurrentMode] = useState<AppMode>('pokedex');
 
-  // Refactored state for regional data fetching
+  // Pokedex-specific State
+  const [selectedPokemon, setSelectedPokemon] = useState<Pokemon | null>(null);
+  const [currentRegion, setCurrentRegion] = useState<string>('Kanto');
+  const [activeTypes, setActiveTypes] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  // Modal & Loading State
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isThemeEditorOpen, setIsThemeEditorOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Data Fetching State
+  const [isAllDataFetched, setIsAllDataFetched] = useState(false);
+  const [isFetchingAll, setIsFetchingAll] = useState(false);
   const initialRegionFetchStates = FETCHABLE_REGIONS.reduce((acc, region) => {
     acc[region] = { isFetched: false, isFetching: false };
     return acc;
   }, {} as Record<string, RegionFetchState>);
-
   const [regionFetchStates, setRegionFetchStates] = useState<Record<string, RegionFetchState>>(initialRegionFetchStates);
 
   // Effect to apply the current theme to the document root
@@ -139,6 +106,7 @@ const App = () => {
     }
   }, [theme]);
 
+  // Effect for initial data load
   useEffect(() => {
     setIsLoading(true);
     // Initialize with local Kanto data
@@ -207,18 +175,14 @@ const App = () => {
   };
 
   // Core data fetching logic. It's idempotent and can be safely called multiple times.
-  // It checks the latest state to avoid redundant fetches.
   const fetchRegionData = (regionName: string): Promise<void> => {
     return new Promise((resolve) => {
       setRegionFetchStates(currentStates => {
-        // Using the functional update allows us to get the LATEST state.
         if (currentStates[regionName]?.isFetched || currentStates[regionName]?.isFetching) {
-          resolve(); // Already done or in progress, so we resolve immediately.
-          return currentStates; // No state change.
+          resolve();
+          return currentStates;
         }
   
-        // If we get here, it means we need to fetch.
-        // We trigger the async operation, which will later update the state again and resolve the promise.
         setTimeout(() => {
           const regionRange = REGION_RANGES[regionName];
           const newPokemon = POKEMON_LIST_ALL.filter(p => p.id >= regionRange.start && p.id <= regionRange.end);
@@ -244,10 +208,9 @@ const App = () => {
             [regionName]: { isFetched: true, isFetching: false }
           }));
           
-          resolve(); // Resolve the promise once the data is fetched and state is updated.
+          resolve();
         }, 500);
   
-        // Return the new state to indicate that fetching has started.
         return {
           ...currentStates,
           [regionName]: { ...currentStates[regionName], isFetching: true }
@@ -259,21 +222,17 @@ const App = () => {
   // Effect to automatically fetch all region data sequentially on app launch.
   useEffect(() => {
     if (isLoading) {
-      return; // Don't run until initial data is loaded
+      return;
     }
-
     const autoFetchAllRegions = async () => {
       for (const region of FETCHABLE_REGIONS) {
         await fetchRegionData(region);
       }
       setIsAllDataFetched(true);
     };
-
     autoFetchAllRegions();
   }, [isLoading]);
 
-
-  // Handler for manual fetch from settings modal
   const handleFetchRegionData = (regionName: string) => {
     fetchRegionData(regionName);
   };
@@ -298,16 +257,39 @@ const App = () => {
   const totalInRegion = regionPokemon.length;
   const caughtInRegion = regionPokemon.filter(p => pokemonStatuses[p.id] === 'caught').length;
 
-  return (
-    <>
-      <TopBar
-        onOpenSettings={() => setIsSettingsOpen(true)}
-        onOpenThemeEditor={() => setIsThemeEditorOpen(true)}
-        isShinyMode={isShinyMode}
-        onToggleShinyMode={handleToggleShinyMode}
-      />
-      <div className="app-content">
-        <Navigation
+  const renderCurrentMode = () => {
+    switch (currentMode) {
+      case 'pokedex':
+        return (
+          <PokedexView
+            currentRegion={currentRegion}
+            onRegionChange={handleRegionChange}
+            activeTypes={activeTypes}
+            onTypeToggle={handleTypeToggle}
+            favoritePokemon={favoritePokemon}
+            onPokemonSelect={handlePokemonSelect}
+            totalInRegion={totalInRegion}
+            caughtInRegion={caughtInRegion}
+            searchQuery={searchQuery}
+            onSearchChange={handleSearchChange}
+            pokemonStatuses={pokemonStatuses}
+            onToggleStatus={handleToggleStatus}
+            pokemonList={pokemonList}
+            regionRanges={REGION_RANGES}
+            favorites={favorites}
+            onToggleFavorite={handleToggleFavorite}
+            isLoading={isLoading}
+            isShinyMode={isShinyMode}
+          />
+        );
+      case 'shiny-hunting':
+        return <ShinyHuntingView />;
+      case 'team-builder':
+        return <TeamBuilderView />;
+      case 'battle-sim':
+        return <BattleSimView />;
+      default:
+        return <PokedexView
           currentRegion={currentRegion}
           onRegionChange={handleRegionChange}
           activeTypes={activeTypes}
@@ -317,24 +299,32 @@ const App = () => {
           totalInRegion={totalInRegion}
           caughtInRegion={caughtInRegion}
           searchQuery={searchQuery}
-        />
-        <PokemonGrid
-          region={currentRegion}
-          activeTypes={activeTypes}
-          onPokemonSelect={handlePokemonSelect}
+          onSearchChange={handleSearchChange}
           pokemonStatuses={pokemonStatuses}
           onToggleStatus={handleToggleStatus}
           pokemonList={pokemonList}
           regionRanges={REGION_RANGES}
           favorites={favorites}
           onToggleFavorite={handleToggleFavorite}
-          searchQuery={searchQuery}
-          onSearchChange={handleSearchChange}
           isLoading={isLoading}
           isShinyMode={isShinyMode}
-        />
-        <NewsFeed />
-      </div>
+        />;
+    }
+  };
+
+  return (
+    <>
+      <TopBar
+        onOpenSettings={() => setIsSettingsOpen(true)}
+        onOpenThemeEditor={() => setIsThemeEditorOpen(true)}
+        isShinyMode={isShinyMode}
+        onToggleShinyMode={handleToggleShinyMode}
+        currentMode={currentMode}
+        onSetMode={setCurrentMode}
+      />
+      
+      {renderCurrentMode()}
+
       {selectedPokemon && (
         <Profile
           pokemon={selectedPokemon}
