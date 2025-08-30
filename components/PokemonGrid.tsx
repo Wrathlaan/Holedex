@@ -42,41 +42,41 @@ const PokemonGrid = ({
   isLoading,
   isShinyMode
 }: PokemonGridProps) => {
-  const range = regionRanges[region] || { start: 0, end: 0 };
+  const trimmedQuery = searchQuery.toLowerCase().trim();
+  let filteredPokemon: Pokemon[];
 
-  // Filter by region first
-  const regionPokemon = pokemonList.filter(
-    (pokemon) => pokemon.id >= range.start && pokemon.id <= range.end
-  );
-
-  // Then filter by type
-  const typeFilteredPokemon = activeTypes.length > 0
-    ? regionPokemon.filter(pokemon =>
-        pokemon.types.some(type => activeTypes.includes(type))
-      )
-    : regionPokemon;
-
-  // Finally, filter by search query
-  const filteredPokemon = typeFilteredPokemon.filter(pokemon => {
-    const query = searchQuery.toLowerCase().trim();
-    if (!query) return true;
-    return (
-      pokemon.name.toLowerCase().includes(query) ||
-      String(pokemon.id) === query
+  if (trimmedQuery) {
+    // If there is a search query, search all pokemon, ignoring region and type filters.
+    filteredPokemon = pokemonList.filter(pokemon => {
+      return (
+        pokemon.name.toLowerCase().includes(trimmedQuery) ||
+        String(pokemon.id) === trimmedQuery
+      );
+    });
+  } else {
+    // Otherwise, apply region and type filters as before.
+    const range = regionRanges[region] || { start: 0, end: 0 };
+    const regionPokemon = pokemonList.filter(
+      (pokemon) => pokemon.id >= range.start && pokemon.id <= range.end
     );
-  });
+    filteredPokemon = activeTypes.length > 0
+      ? regionPokemon.filter(pokemon =>
+          pokemon.types.some(type => activeTypes.includes(type))
+        )
+      : regionPokemon;
+  }
 
 
   return (
     <main className="panel grid-panel" aria-labelledby="grid-title">
-      <h2 id="grid-title">Pokémon Grid - {region}</h2>
+      <h2 id="grid-title">{trimmedQuery ? 'Search Results' : `Pokémon Grid - ${region}`}</h2>
       <input
         type="text"
-        placeholder="Search by name or #"
+        placeholder="Search all Pokémon by name or #"
         className="search-input"
         value={searchQuery}
         onChange={(e) => onSearchChange(e.target.value)}
-        aria-label="Search Pokémon by name or number"
+        aria-label="Search all Pokémon by name or number"
       />
       <div className="pokemon-grid">
         {isLoading ? (
@@ -158,7 +158,9 @@ const PokemonGrid = ({
           })
         ) : (
           <div className="grid-placeholder">
-            No Pokémon match the current filters.
+            {trimmedQuery
+              ? `No Pokémon found for "${searchQuery.trim()}".`
+              : 'No Pokémon match the current filters.'}
           </div>
         )}
       </div>

@@ -21,6 +21,7 @@ interface NavigationProps {
   onPokemonSelect: (pokemon: Pokemon) => void;
   totalInRegion: number;
   caughtInRegion: number;
+  searchQuery: string;
 }
 
 const Navigation = ({
@@ -31,16 +32,21 @@ const Navigation = ({
   favoritePokemon,
   onPokemonSelect,
   totalInRegion,
-  caughtInRegion
+  caughtInRegion,
+  searchQuery,
 }: NavigationProps) => {
 
   const caughtPercentage = totalInRegion > 0 ? (caughtInRegion / totalInRegion) * 100 : 0;
+  const isSearchActive = searchQuery.trim().length > 0;
 
   return (
     <aside className="panel nav-panel" aria-labelledby="nav-title">
       <h2 id="nav-title">Navigation</h2>
+      {isSearchActive && (
+        <p className="search-active-info">Clear search to use filters.</p>
+      )}
       
-      <div className="region-selector-container">
+      <div className={`region-selector-container ${isSearchActive ? 'disabled' : ''}`}>
         <label htmlFor="region-select" className="sr-only">Select Region</label>
         <select
           id="region-select"
@@ -48,6 +54,7 @@ const Navigation = ({
           value={currentRegion}
           onChange={(e) => onRegionChange(e.target.value)}
           aria-label="Select Pokémon Region"
+          disabled={isSearchActive}
         >
           {REGIONS.map((region) => (
             <option key={region} value={region}>
@@ -76,7 +83,7 @@ const Navigation = ({
         </div>
       </div>
 
-      <div className="nav-panel-scrollable-content">
+      <div className={`nav-panel-scrollable-content ${isSearchActive ? 'disabled' : ''}`}>
         <h3 className="filter-title">Filter by Type</h3>
         <div className="type-filter-grid">
           {POKEMON_TYPES.map(type => (
@@ -88,10 +95,10 @@ const Navigation = ({
               className={`type-icon type-filter-icon type-${type} ${activeTypes.includes(type) ? 'active' : ''}`}
               role="checkbox"
               aria-checked={activeTypes.includes(type)}
-              tabIndex={0}
-              onClick={() => onTypeToggle(type)}
+              tabIndex={isSearchActive ? -1 : 0}
+              onClick={isSearchActive ? undefined : () => onTypeToggle(type)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
+                if (!isSearchActive && (e.key === 'Enter' || e.key === ' ')) {
                   onTypeToggle(type);
                 }
               }}

@@ -16,6 +16,28 @@
   --accent-color: #58a6ff;
   --accent-color-translucent: rgba(88, 166, 255, 0.3);
 
+  /* Glass Theme */
+  --panel-dark-rgb: 22, 27, 34;
+  --panel-light-rgb: 33, 38, 45;
+  --glass-backdrop-blur: blur(8px);
+  --glass-border: 1px solid var(--accent-color-translucent);
+  --glass-radius: 6px;
+  --glass-shadow: 0 0 27px var(--glow-color);
+  --glass-modal-shadow: 0 0 45px var(--modal-glow-color);
+
+  /* Component-specific glass backgrounds */
+  --glass-bg-container: rgba(var(--panel-dark-rgb), 0.85);
+  --glass-bg-card: rgba(var(--panel-dark-rgb), 0.7);
+  --glass-bg-card-hover: rgba(var(--panel-light-rgb), 0.8);
+  --glass-bg-interactive: rgba(var(--panel-dark-rgb), 0.6);
+  --glass-bg-interactive-focus: var(--glass-bg-container);
+
+
+  /* Glows & Shadows */
+  --glow-color: rgba(88, 166, 255, 0.225);
+  --modal-glow-color: rgba(88, 166, 255, 0.3);
+  --shiny-glow-color: #FFD700;
+
   /* Type Colors for Glow Effect */
   --type-normal: #A8A77A;
   --type-fire: #EE8130;
@@ -81,12 +103,13 @@ body {
 
 /* Top Bar */
 .top-bar {
-  background-color: rgba(22, 27, 34, 0.85);
-  backdrop-filter: blur(8px);
-  border-radius: 6px;
+  background-color: var(--glass-bg-container);
+  backdrop-filter: var(--glass-backdrop-blur);
+  -webkit-backdrop-filter: var(--glass-backdrop-blur);
+  border-radius: var(--glass-radius);
   padding: 0.75rem 1.5rem;
-  border: 1px solid var(--accent-color-translucent);
-  box-shadow: 0 0 12px rgba(88, 166, 255, 0.15);
+  border: var(--glass-border);
+  box-shadow: var(--glass-shadow);
   flex-shrink: 0;
   display: grid;
   grid-template-columns: 1fr auto 1fr;
@@ -182,22 +205,23 @@ body {
 
 .shiny-toggle-btn.active .shiny-toggle-svg {
   opacity: 1;
-  fill: #FFD700;
-  filter: drop-shadow(0 0 5px #FFD700);
+  fill: var(--shiny-glow-color);
+  filter: drop-shadow(0 0 5px var(--shiny-glow-color));
   transform: rotate(15deg);
 }
 
 
 .panel {
-  background-color: rgba(22, 27, 34, 0.85);
-  backdrop-filter: blur(8px);
-  border-radius: 6px;
+  background-color: var(--glass-bg-container);
+  backdrop-filter: var(--glass-backdrop-blur);
+  -webkit-backdrop-filter: var(--glass-backdrop-blur);
+  border-radius: var(--glass-radius);
   padding: 1.5rem;
-  border: 1px solid var(--accent-color-translucent);
+  border: var(--glass-border);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 0 12px rgba(88, 166, 255, 0.15);
+  box-shadow: var(--glass-shadow);
   position: relative; /* For scanline */
 }
 
@@ -234,21 +258,42 @@ body {
   transition: flex 0.4s ease-in-out;
 }
 
+.search-active-info {
+  font-size: 0.85rem;
+  font-style: italic;
+  color: var(--text-secondary);
+  text-align: center;
+  padding: 0.5rem;
+  background-color: rgba(var(--panel-light-rgb), 0.5);
+  border-radius: var(--glass-radius);
+  margin-bottom: 1rem;
+}
+
+.region-selector-container.disabled,
+.nav-panel-scrollable-content.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
 .region-selector-container {
   margin-bottom: 1.5rem;
   position: relative;
+  transition: opacity 0.2s ease;
 }
 
 .region-select {
   width: 100%;
   padding: 0.75rem 3rem 0.75rem 1rem;
-  border-radius: 5px;
-  border: 1px solid var(--border-color);
-  background-color: var(--panel-dark);
+  border-radius: var(--glass-radius);
+  border: var(--glass-border);
+  background-color: var(--glass-bg-interactive);
+  backdrop-filter: var(--glass-backdrop-blur);
+  -webkit-backdrop-filter: var(--glass-backdrop-blur);
   color: var(--text-primary);
   font-size: 1rem;
   font-weight: 500;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
   cursor: pointer;
   -webkit-appearance: none;
   -moz-appearance: none;
@@ -263,6 +308,7 @@ body {
   outline: none;
   border-color: var(--accent-color);
   box-shadow: 0 0 8px var(--accent-color-translucent);
+  background-color: var(--glass-bg-interactive-focus);
 }
 
 .region-select option {
@@ -275,6 +321,7 @@ body {
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--accent-color) var(--panel-dark);
+  transition: opacity 0.2s ease;
 }
 
 .filter-title, .favorites-title {
@@ -335,12 +382,14 @@ body {
 .search-input {
   width: 100%;
   padding: 0.75rem 1rem;
-  border-radius: 5px;
-  border: 1px solid var(--border-color);
-  background-color: var(--panel-dark);
+  border-radius: var(--glass-radius);
+  border: var(--glass-border);
+  background-color: var(--glass-bg-interactive);
+  backdrop-filter: var(--glass-backdrop-blur);
+  -webkit-backdrop-filter: var(--glass-backdrop-blur);
   color: var(--text-primary);
   font-size: 1rem;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
   margin-bottom: 1rem;
 }
 
@@ -352,6 +401,7 @@ body {
   outline: none;
   border-color: var(--accent-color);
   box-shadow: 0 0 8px var(--accent-color-translucent);
+  background-color: var(--glass-bg-interactive-focus);
 }
 
 .pokemon-grid {
@@ -384,13 +434,13 @@ body {
   align-items: center;
   justify-content: flex-start;
   padding: 1rem 0.5rem;
-  border: 1px solid rgba(88, 166, 255, 0.2);
-  border-radius: 8px;
+  border: var(--glass-border);
+  border-radius: var(--glass-radius);
   cursor: pointer;
   transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
-  background-color: rgba(33, 38, 45, 0.6);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px); /* For Safari */
+  background-color: var(--glass-bg-card);
+  backdrop-filter: var(--glass-backdrop-blur);
+  -webkit-backdrop-filter: var(--glass-backdrop-blur);
   animation: card-entry 0.5s ease-out forwards;
 }
 
@@ -402,14 +452,14 @@ body {
   left: -2px;
   right: -2px;
   bottom: -2px;
-  border-radius: 10px;
+  border-radius: 8px; /* Slightly larger than card radius */
   opacity: 0;
   transition: opacity 0.3s ease-in-out;
   filter: blur(5px);
 }
 
 .pokemon-card:hover {
-  background-color: rgba(33, 38, 45, 0.8);
+  background-color: var(--glass-bg-card-hover);
   transform: scale(1.05) translateY(-2px);
   border-color: transparent;
   box-shadow: none;
@@ -640,8 +690,8 @@ body {
 
 .shiny-icon-profile.active {
   opacity: 1;
-  fill: #FFD700;
-  filter: drop-shadow(0 0 5px #FFD700);
+  fill: var(--shiny-glow-color);
+  filter: drop-shadow(0 0 5px var(--shiny-glow-color));
 }
 
 .profile-id {
@@ -1072,11 +1122,12 @@ body {
   flex-direction: column;
   position: relative;
   animation: modal-scale-up 0.3s ease-out;
-  /* Re-using panel style for consistency */
-  background-color: rgba(22, 27, 34, 0.9);
-  border-radius: 6px;
-  border: 1px solid var(--accent-color-translucent);
-  box-shadow: 0 0 20px rgba(88, 166, 255, 0.2);
+  background-color: var(--glass-bg-container);
+  backdrop-filter: var(--glass-backdrop-blur);
+  -webkit-backdrop-filter: var(--glass-backdrop-blur);
+  border-radius: var(--glass-radius);
+  border: var(--glass-border);
+  box-shadow: var(--glass-modal-shadow);
 }
 
 .modal-close-button {
@@ -1215,6 +1266,53 @@ body {
   margin-bottom: 2rem;
 }
 
+.theme-presets-section {
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.theme-presets-controls {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.theme-presets-controls:last-child {
+  margin-bottom: 0;
+}
+
+.theme-preset-select, .theme-preset-input-name {
+  flex-grow: 1;
+  background-color: var(--glass-bg-interactive);
+  backdrop-filter: var(--glass-backdrop-blur);
+  -webkit-backdrop-filter: var(--glass-backdrop-blur);
+  border: var(--glass-border);
+  border-radius: var(--glass-radius);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  padding: 0.5rem 0.75rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.theme-preset-select:focus, .theme-preset-input-name:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 4px var(--accent-color-translucent);
+  background-color: var(--glass-bg-interactive-focus);
+}
+
+.theme-preset-select {
+  cursor: pointer;
+}
+
+.theme-preset-action-btn {
+  padding: 0.5rem 0.75rem;
+  white-space: nowrap;
+}
+
+
 .theme-editor-section-title {
   font-size: 1.1rem;
   font-weight: 500;
@@ -1269,15 +1367,17 @@ body {
 }
 
 .theme-property-input-hex {
-  background-color: var(--panel-dark);
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
+  background-color: var(--glass-bg-interactive);
+  backdrop-filter: var(--glass-backdrop-blur);
+  -webkit-backdrop-filter: var(--glass-backdrop-blur);
+  border: var(--glass-border);
+  border-radius: var(--glass-radius);
   color: var(--text-secondary);
   font-family: 'Courier New', Courier, monospace;
   font-size: 0.9rem;
   padding: 0.25rem 0.5rem;
   width: 90px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease, background-color 0.2s ease;
   text-transform: uppercase;
 }
 
@@ -1286,33 +1386,46 @@ body {
   color: var(--text-primary);
   border-color: var(--accent-color);
   box-shadow: 0 0 4px var(--accent-color-translucent);
+  background-color: var(--glass-bg-interactive-focus);
 }
 
 .theme-property-input-text {
-  background-color: var(--panel-dark);
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
+  background-color: var(--glass-bg-interactive);
+  backdrop-filter: var(--glass-backdrop-blur);
+  -webkit-backdrop-filter: var(--glass-backdrop-blur);
+  border: var(--glass-border);
+  border-radius: var(--glass-radius);
   color: var(--text-primary);
   font-size: 0.9rem;
   padding: 0.25rem 0.5rem;
   width: 150px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
 .theme-property-input-text:focus {
   outline: none;
   border-color: var(--accent-color);
   box-shadow: 0 0 4px var(--accent-color-translucent);
+  background-color: var(--glass-bg-interactive-focus);
 }
 
 .theme-editor-controls {
   padding: 1rem 1.5rem;
-  border-top: 1px solid var(--border-color);
-  background-color: var(--panel-dark);
+  border-top: var(--glass-border);
+  background-color: var(--glass-bg-container);
+  backdrop-filter: var(--glass-backdrop-blur);
+  -webkit-backdrop-filter: var(--glass-backdrop-blur);
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   gap: 1rem;
   flex-shrink: 0;
+}
+
+.theme-editor-controls-left,
+.theme-editor-controls-right {
+  display: flex;
+  gap: 1rem;
 }
 
 .theme-editor-btn {
@@ -1321,7 +1434,7 @@ body {
   font-weight: 500;
   border-radius: 5px;
   cursor: pointer;
-  transition: background-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, border-color 0.2s ease;
   border: 1px solid var(--border-color);
 }
 
@@ -1337,10 +1450,19 @@ body {
 
 .theme-editor-btn.secondary {
   color: var(--text-primary);
-  background-color: var(--panel-light);
+  background-color: var(--glass-bg-interactive);
+  backdrop-filter: var(--glass-backdrop-blur);
+  -webkit-backdrop-filter: var(--glass-backdrop-blur);
+  border: var(--glass-border);
 }
 .theme-editor-btn.secondary:hover {
-  background-color: #30363d;
+  background-color: var(--glass-bg-interactive-focus);
+  border-color: var(--accent-color);
+}
+
+.theme-editor-btn.secondary[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* --- UI POLISH & ANIMATIONS --- */
