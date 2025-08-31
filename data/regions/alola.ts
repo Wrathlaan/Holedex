@@ -2,7 +2,7 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
-import { Pokemon } from '../../types';
+import { Pokemon } from '../../types.ts';
 
 export const ALOLA_POKEMON: Pokemon[] = [
   { id: 722, name: 'rowlet', types: ['grass', 'flying'] },
@@ -94,3 +94,5 @@ export const ALOLA_POKEMON: Pokemon[] = [
   { id: 808, name: 'meltan', types: ['steel'] },
   { id: 809, name: 'melmetal', types: ['steel'] },
 ];
+
+export default ALOLA_POKEMON;

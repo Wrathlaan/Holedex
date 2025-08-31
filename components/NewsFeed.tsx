@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import React, { useState, useEffect, useCallback } from 'react';
-import { NewsItem } from '../types';
+import { NewsItem } from '../types.ts';
 
 const RSS_FEED_URL = 'https://www.youtube.com/feeds/videos.xml?channel_id=UCFctpiB_Hnlk3ejWfHqSm6Q';
 const RSS2JSON_SERVICE_URL = `https://api.rss2json.com/v1/api.json?rss_url=`;

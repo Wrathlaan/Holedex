@@ -2,7 +2,7 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
-import { Pokemon } from '../../types';
+import { Pokemon } from '../../types.ts';
 
 export const KANTO_POKEMON: Pokemon[] = [
   { id: 1, name: 'bulbasaur', types: ['grass', 'poison'] },
@@ -157,3 +157,5 @@ export const KANTO_POKEMON: Pokemon[] = [
   { id: 150, name: 'mewtwo', types: ['psychic'] },
   { id: 151, name: 'mew', types: ['psychic'] },
 ];
+
+export default KANTO_POKEMON;

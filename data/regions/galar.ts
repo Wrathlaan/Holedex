@@ -2,7 +2,7 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
-import { Pokemon } from '../../types';
+import { Pokemon } from '../../types.ts';
 
 export const GALAR_POKEMON: Pokemon[] = [
   { id: 810, name: 'grookey', types: ['grass'] },
@@ -95,3 +95,6 @@ export const GALAR_POKEMON: Pokemon[] = [
   { id: 897, name: 'spectrier', types: ['ghost'] },
   { id: 898, name: 'calyrex', types: ['psychic', 'grass'] },
 ];
+
+// FIX: Add default export to be compatible with dynamic import in data/loader.ts
+export default GALAR_POKEMON;

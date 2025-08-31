@@ -2,7 +2,7 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
-import { Pokemon } from '../../types';
+import { Pokemon } from '../../types.ts';
 
 export const JOHTO_POKEMON: Pokemon[] = [
   { id: 152, name: 'chikorita', types: ['grass'] },
@@ -106,3 +106,5 @@ export const JOHTO_POKEMON: Pokemon[] = [
   { id: 250, name: 'ho-oh', types: ['fire', 'flying'] },
   { id: 251, name: 'celebi', types: ['psychic', 'grass'] },
 ];
+
+export default JOHTO_POKEMON;

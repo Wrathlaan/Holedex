@@ -3,97 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import React, { useState, useMemo, useEffect } from 'react';
-import { Pokemon, ShinyPokemon } from '../../types';
-import ProbabilityGraph from './ProbabilityGraph';
-import { ShareShinyModal } from '../../components/ShinyCard';
-import { POKEMON_MODELS } from '../../data/pokemon-models';
-
-// FIX: Added global declaration for 'model-viewer' to resolve JSX type error.
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      'model-viewer': React.HTMLAttributes<HTMLElement> & {
-        src?: string;
-        alt?: string;
-        cameraControls?: boolean;
-        autoRotate?: boolean;
-        autoplay?: boolean;
-        ar?: boolean;
-        arModes?: string;
-        cameraOrbit?: string;
-        exposure?: string;
-        shadowIntensity?: string;
-        onError?: (event: React.SyntheticEvent<HTMLElement, Event>) => void;
-      };
-    }
-  }
-}
-
-interface ModelViewerProps {
-  pokemonName: string;
-  pokemonId: number;
-  isShiny: boolean;
-}
-
-const ModelViewer = ({ pokemonName, pokemonId, isShiny }: ModelViewerProps) => {
-  const [modelSrc, setModelSrc] = useState('');
-  const [hasError, setHasError] = useState(false);
-
-  const fallbackSpriteUrl = isShiny 
-    ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/shiny/${pokemonId}.png`
-    : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemonId}.png`;
-
-  useEffect(() => {
-    setHasError(false); // Reset error on change
-    const pokemonModelInfo = POKEMON_MODELS.find(p => p.id === pokemonId);
-    const formName = isShiny ? 'shiny' : 'regular';
-    const modelForm = pokemonModelInfo?.forms.find(f => f.formName === formName);
-
-    if (modelForm?.model) {
-        setModelSrc(modelForm.model);
-    } else {
-        console.warn(`3D model for ${pokemonName} (${formName}) not found in data source, falling back to sprite.`);
-        setHasError(true);
-    }
-  }, [pokemonId, isShiny, pokemonName]);
-
-  const handleError = () => {
-    console.warn(`Failed to load 3D model for ${pokemonName} from ${modelSrc}, falling back to sprite.`);
-    setHasError(true);
-  };
-
-  if (hasError) {
-    return (
-      <div className="viewer-placeholder" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}>
-        <img src={fallbackSpriteUrl} alt={pokemonName} style={{ width: '150px', height: '150px' }} />
-        <p>3D model not available.<br/>Showing sprite instead.</p>
-      </div>
-    );
-  }
-  
-  return (
-    <model-viewer
-      src={modelSrc}
-      alt={`3D model of ${isShiny ? 'shiny ' : ''}${pokemonName}`}
-      cameraControls
-      autoRotate
-      autoplay
-      ar
-      arModes="webxr scene-viewer quick-look"
-      cameraOrbit="0deg 75deg 105%"
-      exposure="1.2"
-      shadowIntensity="1.5"
-      onError={handleError}
-    >
-    </model-viewer>
-  );
-};
-
+import { Pokemon, ShinyPokemon, Hunt } from '../../types.ts';
+import ProbabilityGraph from './ProbabilityGraph.tsx';
+import { ShareShinyModal } from '../../components/ShinyCard.tsx';
 
 const SPRITE_BASE_URL = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/';
 const SHINY_SPRITE_BASE_URL = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/shiny/';
 const SHINY_STORAGE_KEY = 'holodex-shiny-collection';
-const HUNTS_STORAGE_KEY = 'holodex-shiny-hunts';
 
 const HUNT_METHODS: Record<string, { odds: number; charmOdds: number; name: string }> = {
   'full-odds': { odds: 4096, charmOdds: 1365, name: 'Full Odds' },
@@ -102,13 +18,6 @@ const HUNT_METHODS: Record<string, { odds: number; charmOdds: number; name: stri
   'mass-outbreak-sv': { odds: 1024, charmOdds: 819, name: 'Mass Outbreak (SV, 60+)' },
   'dynamax-adv': { odds: 300, charmOdds: 100, name: 'Dynamax Adventure' },
 };
-
-interface Hunt {
-  id: number;
-  target: Pokemon;
-  count: number;
-  method: string;
-}
 
 interface ModalState {
   isOpen: boolean;
@@ -142,11 +51,27 @@ const MilestoneSparkles = () => {
 
 interface ShinyHuntingViewProps {
   pokemonList: Pokemon[];
+  hunts: Hunt[];
+  activeHuntId: number | null;
+  hasShinyCharm: boolean;
+  onAddHunt: (pokemon: Pokemon) => void;
+  onDeleteHunt: (huntId: number) => void;
+  onUpdateHunt: (huntId: number, updates: Partial<Omit<Hunt, 'id' | 'target'>>) => void;
+  onSetActiveHunt: (huntId: number | null) => void;
+  onSetHasShinyCharm: (hasCharm: boolean) => void;
 }
 
-const ShinyHuntingView = ({ pokemonList }: ShinyHuntingViewProps) => {
-  const [hunts, setHunts] = useState<Hunt[]>([]);
-  const [activeHuntId, setActiveHuntId] = useState<number | null>(null);
+const ShinyHuntingView = ({ 
+  pokemonList,
+  hunts,
+  activeHuntId,
+  hasShinyCharm,
+  onAddHunt,
+  onDeleteHunt,
+  onUpdateHunt,
+  onSetActiveHunt,
+  onSetHasShinyCharm,
+}: ShinyHuntingViewProps) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showMilestoneEffect, setShowMilestoneEffect] = useState(false);
   const [showLogShinyEffect, setShowLogShinyEffect] = useState(false);
@@ -156,19 +81,10 @@ const ShinyHuntingView = ({ pokemonList }: ShinyHuntingViewProps) => {
   const [showOverlayUrl, setShowOverlayUrl] = useState(false);
   const [shinyCollection, setShinyCollection] = useState<ShinyPokemon[]>([]);
   const [isPopping, setIsPopping] = useState(false);
-  const [hasShinyCharm, setHasShinyCharm] = useState(false);
-  const [is3DViewerShiny, setIs3DViewerShiny] = useState(true);
 
   // Load data from localStorage on initial render
   useEffect(() => {
     try {
-      const savedHuntsData = localStorage.getItem(HUNTS_STORAGE_KEY);
-      if (savedHuntsData) {
-        const parsed = JSON.parse(savedHuntsData);
-        setHunts(parsed.hunts || []);
-        setActiveHuntId(parsed.activeHuntId || null);
-        setHasShinyCharm(parsed.hasShinyCharm || false);
-      }
       const savedShinies = localStorage.getItem(SHINY_STORAGE_KEY);
       if (savedShinies) {
         setShinyCollection(JSON.parse(savedShinies));
@@ -181,17 +97,11 @@ const ShinyHuntingView = ({ pokemonList }: ShinyHuntingViewProps) => {
   // Save data to localStorage whenever it changes
   useEffect(() => {
     try {
-      localStorage.setItem(HUNTS_STORAGE_KEY, JSON.stringify({ hunts, activeHuntId, hasShinyCharm }));
       localStorage.setItem(SHINY_STORAGE_KEY, JSON.stringify(shinyCollection));
     } catch (e) {
       console.error("Failed to save data to localStorage", e);
     }
-  }, [hunts, activeHuntId, shinyCollection, hasShinyCharm]);
-
-  useEffect(() => {
-    // When the active hunt changes, reset the viewer to show the shiny model by default.
-    setIs3DViewerShiny(true);
-  }, [activeHuntId]);
+  }, [shinyCollection]);
 
   useEffect(() => {
     if (showMilestoneEffect) {
@@ -213,26 +123,11 @@ const ShinyHuntingView = ({ pokemonList }: ShinyHuntingViewProps) => {
     return pokemonList.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 10);
   }, [searchQuery, pokemonList]);
   
-  const handleAddHunt = (pokemon: Pokemon) => {
-    const newHunt: Hunt = { id: Date.now(), target: pokemon, count: 0, method: 'full-odds' };
-    const newHunts = [...hunts, newHunt];
-    setHunts(newHunts);
-    setActiveHuntId(newHunt.id);
+  const handleAddHuntFromSearch = (pokemon: Pokemon) => {
+    onAddHunt(pokemon);
     setSearchQuery('');
   };
 
-  const handleDeleteHunt = (huntId: number) => {
-    if (window.confirm("Are you sure you want to delete this hunt? This action cannot be undone.")) {
-      setHunts(prevHunts => {
-        const newHunts = prevHunts.filter(h => h.id !== huntId);
-        if (activeHuntId === huntId) {
-          setActiveHuntId(newHunts[0]?.id ?? null);
-        }
-        return newHunts;
-      });
-    }
-  };
-  
   const handleAddShiny = (shiny: Omit<ShinyPokemon, 'id' | 'name'>) => {
     const pokemon = pokemonList.find(p => p.id === shiny.pokemonId);
     if (!pokemon) return;
@@ -248,7 +143,7 @@ const ShinyHuntingView = ({ pokemonList }: ShinyHuntingViewProps) => {
     setModalState({ isOpen: false });
 
     if (modalState.fromHuntId) {
-      handleDeleteHunt(modalState.fromHuntId);
+      onDeleteHunt(modalState.fromHuntId);
     }
   };
   
@@ -258,10 +153,6 @@ const ShinyHuntingView = ({ pokemonList }: ShinyHuntingViewProps) => {
     }
   }
 
-  const handleUpdateHunt = (huntId: number, updates: Partial<Omit<Hunt, 'id' | 'target'>>) => {
-    setHunts(prev => prev.map(h => h.id === huntId ? { ...h, ...updates } : h));
-  };
-  
   const handleOpenLogModal = () => {
     if (!activeHunt) return;
     setModalState({
@@ -282,20 +173,20 @@ const ShinyHuntingView = ({ pokemonList }: ShinyHuntingViewProps) => {
     if (newCount > 0 && (newCount === 100 || newCount === 500 || newCount % 1000 === 0)) {
       setShowMilestoneEffect(true);
     }
-    handleUpdateHunt(activeHunt.id, { count: newCount });
+    onUpdateHunt(activeHunt.id, { count: newCount });
     setIsPopping(true);
     setTimeout(() => setIsPopping(false), 200);
   };
   
   const handleDecrement = () => {
     if (!activeHunt) return;
-    handleUpdateHunt(activeHunt.id, { count: Math.max(0, activeHunt.count - 1) });
+    onUpdateHunt(activeHunt.id, { count: Math.max(0, activeHunt.count - 1) });
   };
   
   const handleResetCount = () => {
     if (!activeHunt) return;
     if (window.confirm("Are you sure you want to reset the encounter count for this hunt?")) {
-      handleUpdateHunt(activeHunt.id, { count: 0 });
+      onUpdateHunt(activeHunt.id, { count: 0 });
     }
   };
   
@@ -305,142 +196,114 @@ const ShinyHuntingView = ({ pokemonList }: ShinyHuntingViewProps) => {
 
   return (
     <div className="app-content shiny-view-container">
-        {/* Column 1: Hunts List */}
-        <aside className="panel current-hunts-panel">
-          <h2>Current Hunts</h2>
-          <div className="hunt-search">
-            <input type="text" placeholder="Search to add a new hunt..." className="search-input" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
-            {searchResults.length > 0 && <ul className="hunt-search-results">{searchResults.map(p => <li key={p.id} onClick={() => handleAddHunt(p)}>{p.name}</li>)}</ul>}
-          </div>
-          <div className="hunt-list">
-            {hunts.length > 0 ? hunts.map(hunt => (
-              <div key={hunt.id} className={`hunt-item ${hunt.id === activeHuntId ? 'active' : ''}`} onClick={() => setActiveHuntId(hunt.id)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setActiveHuntId(hunt.id); }}>
-                <img src={`${SPRITE_BASE_URL}${hunt.target.id}.png`} alt={hunt.target.name} className="hunt-item-sprite" />
-                <div className="hunt-item-info">
-                  <span className="hunt-item-name">{hunt.target.name}</span>
-                  <span className="hunt-item-count">{hunt.count.toLocaleString()} encounters</span>
-                </div>
-                <button className="hunt-item-delete-btn" title={`Delete hunt for ${hunt.target.name}`} onClick={(e) => { e.stopPropagation(); handleDeleteHunt(hunt.id); }}>&times;</button>
-              </div>
-            )) : (
-              <div className="placeholder-container">
-                <svg viewBox="0 0 24 24"><path fill="currentColor" d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z" /></svg>
-                <p>Search to add a new hunt.</p>
-              </div>
-            )}
-          </div>
-        </aside>
-
-        {/* Column 2: Viewer and Trophy Case */}
-        <div className="shiny-view-column-center">
-        <section className="panel viewer-3d-panel">
-          <div className="viewer-header">
-            <h2>3D Viewer</h2>
-            {activeHunt && (
-              <div className="viewer-toggle">
-                <label htmlFor="viewer-shiny-toggle">Show Shiny</label>
-                <label className="graph-toggle-switch">
-                  <input id="viewer-shiny-toggle" type="checkbox" checked={is3DViewerShiny} onChange={() => setIs3DViewerShiny(p => !p)} />
-                  <span className="slider"></span>
-                </label>
-              </div>
-            )}
-          </div>
-          <div className="viewer-content">
-            {activeHunt ? (
-              <ModelViewer
-                pokemonName={activeHunt.target.name}
-                pokemonId={activeHunt.target.id}
-                isShiny={is3DViewerShiny}
-              />
-            ) : (
-              <div className="viewer-placeholder">Select a Pokémon to view.</div>
-            )}
-          </div>
-        </section>
-
-        <main className="panel trophy-case-panel">
-          {showLogShinyEffect && <MilestoneSparkles />}
-          <div className="trophy-case-header">
-              <h2>Trophy Case ({shinyCollection.length})</h2>
-              <button className="add-shiny-btn" onClick={() => setModalState({ isOpen: true, initialData: {} })} >+ Add Shiny</button>
-          </div>
-          <div className="trophy-case-grid">
-            {shinyCollection.length > 0 ? shinyCollection.map((shiny) => (
-              <div key={shiny.id} className={`trophy-card ${shiny.nickname ? 'has-nickname' : ''}`}>
-                <button className="trophy-delete-btn" title="Delete Shiny" onClick={() => handleDeleteShiny(shiny.id)}>&times;</button>
-                <button className="trophy-share-btn" title="Share Shiny" onClick={() => setShinyToShare(shiny)}><svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"></path></svg></button>
-                <img src={`${SHINY_SPRITE_BASE_URL}${shiny.pokemonId}.png`} alt={`Shiny ${shiny.name}`} className="pokemon-card-sprite" />
-                {shiny.nickname && <span className="trophy-nickname">"{shiny.nickname}"</span>}
-                <span className="pokemon-card-name">{shiny.name}</span>
-                <div className="trophy-card-info">
-                  <div className="trophy-card-detail-item"><span className="trophy-card-label">Encounters</span><span className="trophy-card-value">{shiny.encounters.toLocaleString()}</span></div>
-                  <div className="trophy-card-detail-item"><span className="trophy-card-label">Method</span><span className="trophy-card-value">{HUNT_METHODS[shiny.method]?.name || shiny.method}</span></div>
-                  <div className="trophy-card-detail-item"><span className="trophy-card-label">Date</span><span className="trophy-card-value">{shiny.date}</span></div>
-                </div>
-              </div>
-            )) : <div className="grid-placeholder"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M19,2H5A3,3 0 0,0 2,5V19A3,3 0 0,0 5,22H19A3,3 0 0,0 22,19V5A3,3 0 0,0 19,2M16.8,16.5L15.4,15.1L12,18.5L8.6,15.1L7.2,16.5L10.6,19.9L7.2,23.3L8.6,24.7L12,21.3L15.4,24.7L16.8,23.3L13.4,19.9L16.8,16.5M12,13.5A4.5,4.5 0 0,1 7.5,9A4.5,4.5 0 0,1 12,4.5A4.5,4.5 0 0,1 16.5,9A4.5,4.5 0 0,1 12,13.5Z"/></svg>Your shiny collection is empty.</div>}
-          </div>
-        </main>
+      {/* Column 1: Hunts List */}
+      <aside className="panel current-hunts-panel">
+        <h2>Current Hunts</h2>
+        <div className="hunt-search">
+          <input type="text" placeholder="Search to add a new hunt..." className="search-input" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+          {searchResults.length > 0 && <ul className="hunt-search-results">{searchResults.map(p => <li key={p.id} onClick={() => handleAddHuntFromSearch(p)}>{p.name}</li>)}</ul>}
         </div>
-
-        {/* Column 3: Hunt Controls */}
-        <aside className="panel hunt-manager">
-          <h2>Hunt Controls</h2>
-          {activeHunt ? (
-            <div className="hunt-active-content">
-              <div className="hunt-target-display">
-                <h3>{activeHunt.target.name}</h3>
-                <div className="hunt-sprite-comparison">
-                  <div className="sprite-container"><img src={`${SPRITE_BASE_URL}${activeHunt.target.id}.png`} alt={`Normal ${activeHunt.target.name}`} className="hunt-sprite" /><span className="sprite-label">Normal</span></div>
-                  <div className="sprite-container"><img src={`${SHINY_SPRITE_BASE_URL}${activeHunt.target.id}.png`} alt={`Shiny ${activeHunt.target.name}`} className="hunt-sprite shiny" /><span className="sprite-label">Shiny</span></div>
-                </div>
+        <div className="hunt-list">
+          {hunts.length > 0 ? hunts.map(hunt => (
+            <div key={hunt.id} className={`hunt-item ${hunt.id === activeHuntId ? 'active' : ''}`} onClick={() => onSetActiveHunt(hunt.id)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onSetActiveHunt(hunt.id); }}>
+              <img src={`${SPRITE_BASE_URL}${hunt.target.id}.png`} alt={hunt.target.name} className="hunt-item-sprite" />
+              <div className="hunt-item-info">
+                <span className="hunt-item-name">{hunt.target.name}</span>
+                <span className="hunt-item-count">{hunt.count.toLocaleString()} encounters</span>
               </div>
-              <div className="hunt-controls">
-                <div className={`encounter-counter-wrapper ${isPopping ? 'popping' : ''}`} onClick={handleIncrement}>
-                  <div className="encounter-count">{activeHunt.count.toLocaleString()}</div>
-                  {showMilestoneEffect && <MilestoneSparkles />}
-                </div>
-                <div className="counter-btn-group">
-                  <button onClick={(e) => { e.stopPropagation(); handleDecrement(); }}>-</button>
-                  <button onClick={(e) => { e.stopPropagation(); handleIncrement(); }}>+</button>
-                </div>
-                <div className="hunt-method-selector">
-                  <select className="region-select" value={activeHunt.method} onChange={e => handleUpdateHunt(activeHunt.id, { method: e.target.value })}>
-                    {Object.entries(HUNT_METHODS).map(([key, { name }]) => <option key={key} value={key}>{name}</option>)}
-                  </select>
-                </div>
-                <div className="odds-probability-display">
-                  <div className="shiny-charm-toggle-container">
-                    <label htmlFor="shiny-charm-toggle">Shiny Charm</label>
-                    <label className="graph-toggle-switch">
-                      <input id="shiny-charm-toggle" type="checkbox" checked={hasShinyCharm} onChange={() => setHasShinyCharm(p => !p)} />
-                      <span className="slider"></span>
-                    </label>
-                  </div>
-                  <div className="odds-probability-item">
-                    <span>Current Odds</span>
-                    <span className="value">1 / {currentOdds.toLocaleString()}</span>
-                  </div>
-                  <div className="odds-probability-item cumulative">
-                    <span>Cumulative Chance</span>
-                    <span className="value">{cumulativeProbability.toFixed(2)}%</span>
-                  </div>
-                  <div className="graph-toggle-container">
-                    <label htmlFor="graph-toggle">Show Probability Graph</label>
-                    <label className="graph-toggle-switch"><input id="graph-toggle" type="checkbox" checked={showProbabilityGraph} onChange={() => setShowProbabilityGraph(p => !p)} /><span className="slider"></span></label>
-                  </div>
-                  {showProbabilityGraph && <ProbabilityGraph odds={currentOdds} encounters={activeHunt.count} />}
-                   <button onClick={() => setShowOverlayUrl(true)} className="theme-editor-btn secondary" style={{marginTop: '0.5rem'}}>Streamer Overlay</button>
-                </div>
-                <div className="hunt-actions">
-                  <button onClick={handleOpenLogModal} className="fetch-data-btn">Log Shiny!</button>
-                  <button onClick={handleResetCount} className="theme-editor-btn secondary">Reset Count</button>
-                </div>
+              <button className="hunt-item-delete-btn" title={`Delete hunt for ${hunt.target.name}`} onClick={(e) => { e.stopPropagation(); onDeleteHunt(hunt.id); }}>&times;</button>
+            </div>
+          )) : (
+            <div className="placeholder-container">
+              <svg viewBox="0 0 24 24"><path fill="currentColor" d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z" /></svg>
+              <p>Search to add a new hunt.</p>
+            </div>
+          )}
+        </div>
+      </aside>
+
+      {/* Column 2: Trophy Case */}
+      <main className="panel trophy-case-panel">
+        {showLogShinyEffect && <MilestoneSparkles />}
+        <div className="trophy-case-header">
+            <h2>Trophy Case ({shinyCollection.length})</h2>
+            <button className="add-shiny-btn" onClick={() => setModalState({ isOpen: true, initialData: {} })} >+ Add Shiny</button>
+        </div>
+        <div className="trophy-case-grid">
+          {shinyCollection.length > 0 ? shinyCollection.map((shiny) => (
+            <div key={shiny.id} className={`trophy-card ${shiny.nickname ? 'has-nickname' : ''}`}>
+              <button className="trophy-delete-btn" title="Delete Shiny" onClick={() => handleDeleteShiny(shiny.id)}>&times;</button>
+              <button className="trophy-share-btn" title="Share Shiny" onClick={() => setShinyToShare(shiny)}><svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"></path></svg></button>
+              <img src={`${SHINY_SPRITE_BASE_URL}${shiny.pokemonId}.png`} alt={`Shiny ${shiny.name}`} className="pokemon-card-sprite" />
+              {shiny.nickname && <span className="trophy-nickname">"{shiny.nickname}"</span>}
+              <span className="pokemon-card-name">{shiny.name}</span>
+              <div className="trophy-card-info">
+                <div className="trophy-card-detail-item"><span className="trophy-card-label">Encounters</span><span className="trophy-card-value">{shiny.encounters.toLocaleString()}</span></div>
+                <div className="trophy-card-detail-item"><span className="trophy-card-label">Method</span><span className="trophy-card-value">{HUNT_METHODS[shiny.method]?.name || shiny.method}</span></div>
+                <div className="trophy-card-detail-item"><span className="trophy-card-label">Date</span><span className="trophy-card-value">{shiny.date}</span></div>
               </div>
             </div>
-          ) : <div className="placeholder-container"><p>Select a hunt to view controls.</p></div>}
-        </aside>
+          )) : <div className="grid-placeholder"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M19,2H5A3,3 0 0,0 2,5V19A3,3 0 0,0 5,22H19A3,3 0 0,0 22,19V5A3,3 0 0,0 19,2M16.8,16.5L15.4,15.1L12,18.5L8.6,15.1L7.2,16.5L10.6,19.9L7.2,23.3L8.6,24.7L12,21.3L15.4,24.7L16.8,23.3L13.4,19.9L16.8,16.5M12,13.5A4.5,4.5 0 0,1 7.5,9A4.5,4.5 0 0,1 12,4.5A4.5,4.5 0 0,1 16.5,9A4.5,4.5 0 0,1 12,13.5Z"/></svg>Your shiny collection is empty.</div>}
+        </div>
+      </main>
+
+      {/* Column 3: Hunt Controls */}
+      <aside className="panel hunt-manager">
+        <h2>Hunt Controls</h2>
+        {activeHunt ? (
+          <div className="hunt-active-content">
+            <div className="hunt-target-display">
+              <h3>{activeHunt.target.name}</h3>
+              <div className="hunt-sprite-comparison">
+                <div className="sprite-container"><img src={`${SPRITE_BASE_URL}${activeHunt.target.id}.png`} alt={`Normal ${activeHunt.target.name}`} className="hunt-sprite" /><span className="sprite-label">Normal</span></div>
+                <div className="sprite-container"><img src={`${SHINY_SPRITE_BASE_URL}${activeHunt.target.id}.png`} alt={`Shiny ${activeHunt.target.name}`} className="hunt-sprite shiny" /><span className="sprite-label">Shiny</span></div>
+              </div>
+            </div>
+            <div className="hunt-controls">
+              <div className={`encounter-counter-wrapper ${isPopping ? 'popping' : ''}`} onClick={handleIncrement}>
+                <div className="encounter-count">{activeHunt.count.toLocaleString()}</div>
+                {showMilestoneEffect && <MilestoneSparkles />}
+              </div>
+              <div className="counter-btn-group">
+                <button onClick={(e) => { e.stopPropagation(); handleDecrement(); }}>-</button>
+                <button onClick={(e) => { e.stopPropagation(); handleIncrement(); }}>+</button>
+              </div>
+              <div className="hunt-method-selector">
+                <select className="region-select" value={activeHunt.method} onChange={e => onUpdateHunt(activeHunt.id, { method: e.target.value })}>
+                  {Object.entries(HUNT_METHODS).map(([key, { name }]) => <option key={key} value={key}>{name}</option>)}
+                </select>
+              </div>
+              <div className="odds-probability-display">
+                <div className="shiny-charm-toggle-container">
+                  <label htmlFor="shiny-charm-toggle">Shiny Charm</label>
+                  <label className="graph-toggle-switch">
+                    <input id="shiny-charm-toggle" type="checkbox" checked={hasShinyCharm} onChange={() => onSetHasShinyCharm(!hasShinyCharm)} />
+                    <span className="slider"></span>
+                  </label>
+                </div>
+                <div className="odds-probability-item">
+                  <span>Current Odds</span>
+                  <span className="value">1 / {currentOdds.toLocaleString()}</span>
+                </div>
+                <div className="odds-probability-item cumulative">
+                  <span>Cumulative Chance</span>
+                  <span className="value">{cumulativeProbability.toFixed(2)}%</span>
+                </div>
+                <div className="graph-toggle-container">
+                  <label htmlFor="graph-toggle">Show Probability Graph</label>
+                  <label className="graph-toggle-switch"><input id="graph-toggle" type="checkbox" checked={showProbabilityGraph} onChange={() => setShowProbabilityGraph(p => !p)} /><span className="slider"></span></label>
+                </div>
+                {showProbabilityGraph && <ProbabilityGraph odds={currentOdds} encounters={activeHunt.count} />}
+                  <button onClick={() => setShowOverlayUrl(true)} className="theme-editor-btn secondary" style={{marginTop: '0.5rem'}}>Streamer Overlay</button>
+              </div>
+              <div className="hunt-actions">
+                <button onClick={handleOpenLogModal} className="fetch-data-btn">Log Shiny!</button>
+                <button onClick={handleResetCount} className="theme-editor-btn secondary">Reset Count</button>
+              </div>
+            </div>
+          </div>
+        ) : <div className="placeholder-container"><p>Select a hunt to view controls.</p></div>}
+      </aside>
       
       {modalState.isOpen && <AddEditShinyModal {...modalState} pokemonList={pokemonList} onSave={handleAddShiny} onClose={() => setModalState({ isOpen: false })} />}
       {shinyToShare && pokemonList.find(p => p.id === shinyToShare.pokemonId) && <ShareShinyModal shiny={shinyToShare} pokemon={pokemonList.find(p => p.id === shinyToShare.pokemonId)!} onClose={() => setShinyToShare(null)} />}

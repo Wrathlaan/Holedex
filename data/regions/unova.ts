@@ -2,7 +2,7 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
-import { Pokemon } from '../../types';
+import { Pokemon } from '../../types.ts';
 
 export const UNOVA_POKEMON: Pokemon[] = [
   { id: 494, name: 'victini', types: ['psychic', 'fire'] },
@@ -162,3 +162,5 @@ export const UNOVA_POKEMON: Pokemon[] = [
   { id: 648, name: 'meloetta-aria', types: ['normal', 'psychic'] },
   { id: 649, name: 'genesect', types: ['bug', 'steel'] },
 ];
+
+export default UNOVA_POKEMON;

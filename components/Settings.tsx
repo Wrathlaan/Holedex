@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import React from 'react';
-import { FETCHABLE_REGIONS } from '../App';
+import { FETCHABLE_REGIONS } from '../types.ts';
 
 interface RegionFetchState {
   isFetched: boolean;

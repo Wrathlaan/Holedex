@@ -5,10 +5,10 @@
 import React from 'react';
 import PlaceholderView from '../../components/PlaceholderView.tsx';
 
-const TeamBuilderView = () => {
+const TrainingView = () => {
   return (
-    <PlaceholderView title="Team Builder" />
+    <PlaceholderView title="Training" />
   );
 };
 
-export default TeamBuilderView;
+export default TrainingView;

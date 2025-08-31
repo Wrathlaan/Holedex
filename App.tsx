@@ -2,18 +2,22 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
-import React, { useState, useEffect } from 'react';
-import TopBar from './components/TopBar';
-import PokedexView from './modes/pokedex/PokedexView';
-import ShinyHuntingView from './modes/shiny_hunting/ShinyHuntingView';
-import TeamBuilderView from './modes/team_builder/TeamBuilderView';
-import BattleSimView from './modes/battle_sim/BattleSimView';
-import Profile from './components/Profile';
-import Settings from './components/Settings';
-import ThemeEditor from './components/ThemeEditor';
-import { Pokemon, Theme, AppMode, ShinyPokemon } from './types';
-import { POKEMON_LIST_KANTO, POKEMON_LIST_ALL } from './data/pokemon';
-import { SharedShinyCardView } from './components/ShinyCard';
+import React, { useState, useEffect, Suspense, lazy, useCallback } from 'react';
+import TopBar from './components/TopBar.tsx';
+import PokedexView from './modes/pokedex/PokedexView.tsx';
+import ShinyHuntingView from './modes/shiny_hunting/ShinyHuntingView.tsx';
+import TeamBuilderView from './modes/team_builder/TeamBuilderView.tsx';
+import BattleSimView from './modes/battle_sim/BattleSimView.tsx';
+import ItemDexView from './modes/item_dex/ItemDexView.tsx';
+import MoveDexView from './modes/move_dex/MoveDexView.tsx';
+import TrainingView from './modes/training/TrainingView.tsx';
+import PokedexEntryPage from './components/PokedexEntryPage.tsx';
+import { Pokemon, Theme, AppMode, ShinyPokemon, Hunt, SharedShinyPayload, FETCHABLE_REGIONS } from './types.ts';
+import { KANTO_POKEMON } from './data/regions/kanto.ts';
+import { SharedShinyCardView } from './components/ShinyCard.tsx';
+import { regionLoaders } from './data/loader.ts';
+
+const Settings = lazy(() => import('./components/Settings.tsx'));
 
 const REGION_RANGES: { [key: string]: { start: number; end: number } } = {
   'Kanto': { start: 1, end: 151 },
@@ -27,8 +31,6 @@ const REGION_RANGES: { [key: string]: { start: number; end: number } } = {
   'Hisui': { start: 899, end: 905 },
   'Paldea': { start: 906, end: 1025 },
 };
-
-export const FETCHABLE_REGIONS = ['Johto', 'Hoenn', 'Sinnoh', 'Unova', 'Kalos', 'Alola', 'Galar', 'Hisui', 'Paldea'];
 
 const DEFAULT_THEME: Theme = {
   '--font-family': `'Roboto', sans-serif`,
@@ -69,10 +71,20 @@ interface RegionFetchState {
   isFetching: boolean;
 }
 
+const HUNTS_STORAGE_KEY = 'holodex-shiny-hunts';
+
+const findRegionForPokemon = (pokemonId: number): string | null => {
+  for (const [region, range] of Object.entries(REGION_RANGES)) {
+    if (pokemonId >= range.start && pokemonId <= range.end) {
+      return region;
+    }
+  }
+  return null;
+};
+
 const App = () => {
   // Global State
-  const [theme, setTheme] = useState<Theme>(DEFAULT_THEME);
-  const [pokemonList, setPokemonList] = useState<Pokemon[]>([]);
+  const [pokemonList, setPokemonList] = useState<Pokemon[]>(KANTO_POKEMON);
   const [pokemonStatuses, setPokemonStatuses] = useState<Record<number, 'seen' | 'caught'>>({});
   const [favorites, setFavorites] = useState<number[]>([]);
   const [isShinyMode, setIsShinyMode] = useState(false);
@@ -81,16 +93,13 @@ const App = () => {
   const [currentMode, setCurrentMode] = useState<AppMode>('pokedex');
 
   // Pokedex-specific State
-  const [selectedPokemon, setSelectedPokemon] = useState<Pokemon | null>(null);
-  const [pokemonContext, setPokemonContext] = useState<Pokemon[]>([]);
   const [currentRegion, setCurrentRegion] = useState<string>('Kanto');
   const [activeTypes, setActiveTypes] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedPokemon, setSelectedPokemon] = useState<Pokemon | null>(null);
   
   // Modal & Loading State
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isThemeEditorOpen, setIsThemeEditorOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   
   // Data Fetching State
   const [isAllDataFetched, setIsAllDataFetched] = useState(false);
@@ -98,68 +107,86 @@ const App = () => {
   const initialRegionFetchStates = FETCHABLE_REGIONS.reduce((acc, region) => {
     acc[region] = { isFetched: false, isFetching: false };
     return acc;
-  }, {} as Record<string, RegionFetchState>);
+  }, { 'Kanto': { isFetched: true, isFetching: false } } as Record<string, RegionFetchState>);
   const [regionFetchStates, setRegionFetchStates] = useState<Record<string, RegionFetchState>>(initialRegionFetchStates);
 
   // Shared view state
-  const [sharedShinyData, setSharedShinyData] = useState<ShinyPokemon | null>(null);
+  const [sharedShinyData, setSharedShinyData] = useState<SharedShinyPayload | null>(null);
+  const [isResolvingSharedView, setIsResolvingSharedView] = useState(true);
 
-  // Effect to apply the current theme to the document root
+  // Shiny Hunting State
+  const [shinyHunts, setShinyHunts] = useState<Hunt[]>([]);
+  const [activeShinyHuntId, setActiveShinyHuntId] = useState<number | null>(null);
+  const [hasShinyCharm, setHasShinyCharm] = useState(false);
+
+  // Effect to apply the default theme to the document root
   useEffect(() => {
-    for (const [key, value] of Object.entries(theme)) {
+    for (const [key, value] of Object.entries(DEFAULT_THEME)) {
       document.documentElement.style.setProperty(key, value);
     }
-  }, [theme]);
+  }, []);
 
   // Effect for initial data load and shared view routing
   useEffect(() => {
-    // Check for shared shiny card view
-    const params = new URLSearchParams(window.location.search);
-    const view = params.get('view');
-    const data = params.get('data');
-    if (view === 'shiny-card' && data) {
-      try {
-        const shiny = JSON.parse(atob(data));
-        if (shiny.pokemonId && shiny.name) {
-          setSharedShinyData(shiny);
+    const resolveView = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const view = params.get('view');
+      const data = params.get('data');
+      if (view === 'shiny-card' && data) {
+        try {
+          const shiny: ShinyPokemon = JSON.parse(atob(data));
+          if (shiny.pokemonId && shiny.name) {
+            const region = findRegionForPokemon(shiny.pokemonId);
+            const loader = region ? regionLoaders[region] : null;
+            if (loader) {
+              const { default: pokemonInRegion } = await loader();
+              const fullPokemonData = pokemonInRegion.find(p => p.id === shiny.pokemonId);
+              if (fullPokemonData) {
+                setSharedShinyData({ shiny, pokemon: fullPokemonData });
+              }
+            } else {
+              throw new Error("Could not find region for shared Pokémon.");
+            }
+          }
+        } catch (e) { 
+          console.error("Failed to parse shared shiny data", e);
+          window.history.replaceState(null, '', window.location.pathname);
         }
-      } catch (e) { 
-        console.error("Failed to parse shared shiny data", e);
-        // If parsing fails, remove the query params and load the main app
-        window.history.replaceState(null, '', window.location.pathname);
       }
+      setIsResolvingSharedView(false);
     }
+    resolveView();
 
-    setIsLoading(true);
     // Initialize with local Kanto data
-    const kantoPokemon = POKEMON_LIST_KANTO;
-    setPokemonList(kantoPokemon);
-
     const initialStatuses: Record<number, 'seen' | 'caught'> = {};
-    kantoPokemon.forEach(p => {
+    KANTO_POKEMON.forEach(p => {
       initialStatuses[p.id] = 'seen';
     });
     setPokemonStatuses(initialStatuses);
-    setIsLoading(false);
+    
+    // Load hunts
+    try {
+      const savedHuntsData = localStorage.getItem(HUNTS_STORAGE_KEY);
+      if (savedHuntsData) {
+        const parsed = JSON.parse(savedHuntsData);
+        setShinyHunts(parsed.hunts || []);
+        setActiveShinyHuntId(parsed.activeHuntId || null);
+        setHasShinyCharm(parsed.hasShinyCharm || false);
+      }
+    } catch (e) { console.error("Failed to load hunts from localStorage", e); }
   }, []);
 
-  const handlePokemonSelect = (pokemon: Pokemon, contextList?: Pokemon[]) => {
-    setSelectedPokemon(pokemon);
-    // When a pokemon is selected, we also capture the list it was selected from
-    // to enable next/previous navigation within that context.
-    if (contextList) {
-      setPokemonContext(contextList);
+  // UseEffect to save hunt data
+  useEffect(() => {
+    try {
+      localStorage.setItem(HUNTS_STORAGE_KEY, JSON.stringify({ hunts: shinyHunts, activeHuntId: activeShinyHuntId, hasShinyCharm }));
+    } catch (e) {
+      console.error("Failed to save hunts to localStorage", e);
     }
-  };
-
-  const handleCloseProfile = () => {
-    setSelectedPokemon(null);
-    setPokemonContext([]); // Clear context on close
-  }
+  }, [shinyHunts, activeShinyHuntId, hasShinyCharm]);
 
   const handleRegionChange = (region: string) => {
     setCurrentRegion(region);
-    setSelectedPokemon(null); // Reset profile when region changes
   };
 
   const handleToggleStatus = (pokemonId: number) => {
@@ -198,81 +225,78 @@ const App = () => {
     setIsShinyMode(prev => !prev);
   };
 
-  const handleApplyTheme = (newTheme: Theme) => {
-    setTheme(newTheme);
+  const handlePokemonSelect = (pokemon: Pokemon) => {
+    setSelectedPokemon(pokemon);
   };
 
-  // Core data fetching logic. It's idempotent and can be safely called multiple times.
-  const fetchRegionData = (regionName: string): Promise<void> => {
-    return new Promise((resolve) => {
-      setRegionFetchStates(currentStates => {
-        if (currentStates[regionName]?.isFetched || currentStates[regionName]?.isFetching) {
-          resolve();
-          return currentStates;
-        }
-  
-        setTimeout(() => {
-          const regionRange = REGION_RANGES[regionName];
-          const newPokemon = POKEMON_LIST_ALL.filter(p => p.id >= regionRange.start && p.id <= regionRange.end);
-  
-          setPokemonList(prevList => {
-            const existingIds = new Set(prevList.map(p => p.id));
-            const uniqueNewPokemon = newPokemon.filter(p => !existingIds.has(p.id));
-            return [...prevList, ...uniqueNewPokemon].sort((a, b) => a.id - b.id);
-          });
-  
-          setPokemonStatuses(prevStatuses => {
-            const newStatuses = { ...prevStatuses };
-            newPokemon.forEach(p => {
-              if (!newStatuses[p.id]) {
-                newStatuses[p.id] = 'seen';
-              }
-            });
-            return newStatuses;
-          });
-  
-          setRegionFetchStates(prev => ({
-            ...prev,
-            [regionName]: { isFetched: true, isFetching: false }
-          }));
-          
-          resolve();
-        }, 500);
-  
-        return {
-          ...currentStates,
-          [regionName]: { ...currentStates[regionName], isFetching: true }
-        };
-      });
-    });
+  const handleCloseEntryPage = () => {
+    setSelectedPokemon(null);
   };
 
-  // Effect to automatically fetch all region data sequentially on app launch.
-  useEffect(() => {
-    if (isLoading) {
+  const fetchRegionData = useCallback(async (regionName: string) => {
+    if (regionFetchStates[regionName]?.isFetched || regionFetchStates[regionName]?.isFetching) {
       return;
     }
-    const autoFetchAllRegions = async () => {
-      for (const region of FETCHABLE_REGIONS) {
-        await fetchRegionData(region);
-      }
-      setIsAllDataFetched(true);
-    };
-    autoFetchAllRegions();
-  }, [isLoading]);
+    const loader = regionLoaders[regionName];
+    if (!loader) return;
 
-  const handleFetchRegionData = (regionName: string) => {
-    fetchRegionData(regionName);
-  };
+    setRegionFetchStates(prev => ({ ...prev, [regionName]: { ...prev[regionName], isFetching: true }}));
+    try {
+      const { default: regionPokemon } = await loader();
 
-  const handleFetchAllData = async () => {
-    setIsFetchingAll(true);
-    for (const region of FETCHABLE_REGIONS) {
-      await fetchRegionData(region);
+      setPokemonList(prevList => {
+        const existingIds = new Set(prevList.map(p => p.id));
+        const uniqueNewPokemon = regionPokemon.filter((p: Pokemon) => !existingIds.has(p.id));
+        return [...prevList, ...uniqueNewPokemon].sort((a, b) => a.id - b.id);
+      });
+
+      setPokemonStatuses(prevStatuses => {
+        const newStatuses = { ...prevStatuses };
+        regionPokemon.forEach((p: Pokemon) => {
+          if (!newStatuses[p.id]) newStatuses[p.id] = 'seen';
+        });
+        return newStatuses;
+      });
+
+      setRegionFetchStates(prev => ({ ...prev, [regionName]: { isFetched: true, isFetching: false }}));
+    } catch (error) {
+      console.error(`Failed to load data for ${regionName}`, error);
+      setRegionFetchStates(prev => ({ ...prev, [regionName]: { isFetched: false, isFetching: false }}));
     }
+  }, [regionFetchStates]);
+
+
+  const handleFetchAllData = useCallback(async () => {
+    if (isAllDataFetched) return;
+    setIsFetchingAll(true);
+    await Promise.all(FETCHABLE_REGIONS.map(region => fetchRegionData(region)));
     setIsAllDataFetched(true);
     setIsFetchingAll(false);
-    setIsSettingsOpen(false);
+  }, [isAllDataFetched, fetchRegionData]);
+
+
+  // --- Shiny Hunt Handlers ---
+  const handleUpdateShinyHunt = (huntId: number, updates: Partial<Omit<Hunt, 'id' | 'target'>>) => {
+    setShinyHunts(prev => prev.map(h => h.id === huntId ? { ...h, ...updates } : h));
+  };
+
+  const handleDeleteShinyHunt = (huntId: number) => {
+    if (window.confirm("Are you sure you want to delete this hunt? This action cannot be undone.")) {
+      setShinyHunts(prevHunts => {
+        const newHunts = prevHunts.filter(h => h.id !== huntId);
+        if (activeShinyHuntId === huntId) {
+          setActiveShinyHuntId(newHunts[0]?.id ?? null);
+        }
+        return newHunts;
+      });
+    }
+  };
+
+  const handleAddShinyHunt = (pokemon: Pokemon) => {
+    const newHunt: Hunt = { id: Date.now(), target: pokemon, count: 0, method: 'full-odds' };
+    const newHunts = [...shinyHunts, newHunt];
+    setShinyHunts(newHunts);
+    setActiveShinyHuntId(newHunt.id);
   };
 
   const favoritePokemon = pokemonList.filter(p => favorites.includes(p.id));
@@ -286,6 +310,22 @@ const App = () => {
   const caughtInRegion = regionPokemon.filter(p => pokemonStatuses[p.id] === 'caught').length;
 
   const renderCurrentMode = () => {
+    if (currentMode === 'pokedex' && selectedPokemon) {
+      return (
+        <PokedexEntryPage
+          pokemon={selectedPokemon}
+          onClose={handleCloseEntryPage}
+          favorites={favorites}
+          onToggleFavorite={handleToggleFavorite}
+          isShinyMode={isShinyMode}
+          onPokemonSelect={handlePokemonSelect}
+          pokemonList={pokemonList}
+          pokemonStatuses={pokemonStatuses}
+          onToggleStatus={handleToggleStatus}
+        />
+      );
+    }
+
     switch (currentMode) {
       case 'pokedex':
         return (
@@ -295,7 +335,6 @@ const App = () => {
             activeTypes={activeTypes}
             onTypeToggle={handleTypeToggle}
             favoritePokemon={favoritePokemon}
-            onPokemonSelect={handlePokemonSelect}
             totalInRegion={totalInRegion}
             caughtInRegion={caughtInRegion}
             searchQuery={searchQuery}
@@ -306,52 +345,52 @@ const App = () => {
             regionRanges={REGION_RANGES}
             favorites={favorites}
             onToggleFavorite={handleToggleFavorite}
-            isLoading={isLoading}
             isShinyMode={isShinyMode}
+            onInitiateSearch={handleFetchAllData}
+            isAllDataFetched={isAllDataFetched}
+            isFetchingAll={isFetchingAll}
+            onPokemonSelect={handlePokemonSelect}
           />
         );
+      case 'training':
+        return <TrainingView />;
       case 'shiny-hunting':
-        return <ShinyHuntingView pokemonList={pokemonList} />;
+        return <ShinyHuntingView 
+          pokemonList={pokemonList}
+          hunts={shinyHunts}
+          activeHuntId={activeShinyHuntId}
+          onAddHunt={handleAddShinyHunt}
+          onDeleteHunt={handleDeleteShinyHunt}
+          onUpdateHunt={handleUpdateShinyHunt}
+          onSetActiveHunt={setActiveShinyHuntId}
+          hasShinyCharm={hasShinyCharm}
+          onSetHasShinyCharm={setHasShinyCharm}
+        />;
       case 'team-builder':
         return <TeamBuilderView />;
       case 'battle-sim':
         return <BattleSimView />;
+      case 'item-dex':
+        return <ItemDexView />;
+      case 'move-dex':
+        return <MoveDexView />;
       default:
-        return <PokedexView
-          currentRegion={currentRegion}
-          onRegionChange={handleRegionChange}
-          activeTypes={activeTypes}
-          onTypeToggle={handleTypeToggle}
-          favoritePokemon={favoritePokemon}
-          onPokemonSelect={handlePokemonSelect}
-          totalInRegion={totalInRegion}
-          caughtInRegion={caughtInRegion}
-          searchQuery={searchQuery}
-          onSearchChange={handleSearchChange}
-          pokemonStatuses={pokemonStatuses}
-          onToggleStatus={handleToggleStatus}
-          pokemonList={pokemonList}
-          regionRanges={REGION_RANGES}
-          favorites={favorites}
-          onToggleFavorite={handleToggleFavorite}
-          isLoading={isLoading}
-          isShinyMode={isShinyMode}
-        />;
+        return null;
     }
   };
 
-  // If a shared shiny is detected, render only that view.
+  if (isResolvingSharedView) {
+    return <div className="suspense-loader" />;
+  }
+  
   if (sharedShinyData) {
-    const pokemon = POKEMON_LIST_ALL.find(p => p.id === sharedShinyData.pokemonId);
-    if (!pokemon) return <div>Error: Pokémon data not found for shared card.</div>;
-    return <SharedShinyCardView shiny={sharedShinyData} pokemon={pokemon} />;
+    return <SharedShinyCardView shiny={sharedShinyData.shiny} pokemon={sharedShinyData.pokemon} />;
   }
 
   return (
     <>
       <TopBar
         onOpenSettings={() => setIsSettingsOpen(true)}
-        onOpenThemeEditor={() => setIsThemeEditorOpen(true)}
         isShinyMode={isShinyMode}
         onToggleShinyMode={handleToggleShinyMode}
         currentMode={currentMode}
@@ -360,34 +399,17 @@ const App = () => {
       
       {renderCurrentMode()}
 
-      {selectedPokemon && (
-        <Profile
-          pokemon={selectedPokemon}
-          pokemonContext={pokemonContext}
-          pokemonStatuses={pokemonStatuses}
-          onToggleStatus={handleToggleStatus}
-          favorites={favorites}
-          onToggleFavorite={handleToggleFavorite}
-          onPokemonSelect={handlePokemonSelect}
-          pokemonList={pokemonList}
-          onClose={handleCloseProfile}
-        />
-      )}
-      <Settings
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        onFetchAllData={handleFetchAllData}
-        isAllDataFetched={isAllDataFetched}
-        isFetchingAll={isFetchingAll}
-        onFetchRegionData={handleFetchRegionData}
-        regionFetchStates={regionFetchStates}
-      />
-      <ThemeEditor
-        isOpen={isThemeEditorOpen}
-        onClose={() => setIsThemeEditorOpen(false)}
-        currentTheme={theme}
-        onApplyTheme={handleApplyTheme}
-      />
+      <Suspense fallback={<div className="suspense-loader" />}>
+        {isSettingsOpen && <Settings
+          isOpen={isSettingsOpen}
+          onClose={() => setIsSettingsOpen(false)}
+          onFetchAllData={handleFetchAllData}
+          isAllDataFetched={isAllDataFetched}
+          isFetchingAll={isFetchingAll}
+          onFetchRegionData={fetchRegionData}
+          regionFetchStates={regionFetchStates}
+        />}
+      </Suspense>
     </>
   );
 };

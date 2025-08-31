@@ -2,7 +2,7 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
-import { Pokemon } from '../../types';
+import { Pokemon } from '../../types.ts';
 
 export const HISUI_POKEMON: Pokemon[] = [
   { id: 899, name: 'wyrdeer', types: ['normal', 'psychic'] },
@@ -13,3 +13,6 @@ export const HISUI_POKEMON: Pokemon[] = [
   { id: 904, name: 'overqwil', types: ['dark', 'poison'] },
   { id: 905, name: 'enamorus-incarnate', types: ['fairy', 'flying'] },
 ];
+
+// FIX: Add default export to be compatible with dynamic import in data/loader.ts
+export default HISUI_POKEMON;

@@ -2,7 +2,7 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
-import { Pokemon } from '../../types';
+import { Pokemon } from '../../types.ts';
 
 export const HOENN_POKEMON: Pokemon[] = [
   { id: 252, name: 'treecko', types: ['grass'] },
@@ -141,3 +141,5 @@ export const HOENN_POKEMON: Pokemon[] = [
   { id: 385, name: 'jirachi', types: ['steel', 'psychic'] },
   { id: 386, name: 'deoxys-normal', types: ['psychic'] },
 ];
+
+export default HOENN_POKEMON;

@@ -3,18 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import React, { useState, useEffect } from 'react';
-import { Pokemon, ShinyPokemon } from '../types';
-
-const SHINY_SPRITE_BASE_URL = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/shiny/';
-
-const HUNT_METHODS: Record<string, { name: string }> = {
-  'full-odds': { name: 'Full Odds' },
-  'masuda': { name: 'Masuda Method' },
-  'sos-chain': { name: 'SOS Chaining' },
-  'mass-outbreak': { name: 'Mass Outbreak' },
-  'dynamax-adv': { name: 'Dynamax Adventure' },
-  'shiny-charm': { name: 'Shiny Charm' },
-};
+import { Pokemon, ShinyPokemon } from '../types.ts';
+import { SHINY_SPRITE_BASE_URL, HUNT_METHODS } from '../constants.ts';
 
 // This is the visual component for the card itself.
 export const ShinyCard: React.FC<{ shiny: ShinyPokemon, pokemon: Pokemon }> = ({ shiny, pokemon }) => {

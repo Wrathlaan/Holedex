@@ -2,11 +2,11 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
-import React from 'react';
-import Navigation from '../../components/Navigation';
-import PokemonGrid from '../../components/PokemonGrid';
-import NewsFeed from '../../components/NewsFeed';
-import { Pokemon } from '../../types';
+import React, { useMemo, useEffect } from 'react';
+import Navigation from '../../components/Navigation.tsx';
+import PokemonGrid from '../../components/PokemonGrid.tsx';
+import NewsFeed from '../../components/NewsFeed.tsx';
+import { Pokemon } from '../../types.ts';
 
 interface PokedexViewProps {
   currentRegion: string;
@@ -14,7 +14,6 @@ interface PokedexViewProps {
   activeTypes: string[];
   onTypeToggle: (type: string) => void;
   favoritePokemon: Pokemon[];
-  onPokemonSelect: (pokemon: Pokemon, context: Pokemon[]) => void;
   totalInRegion: number;
   caughtInRegion: number;
   searchQuery: string;
@@ -25,8 +24,11 @@ interface PokedexViewProps {
   regionRanges: { [key: string]: { start: number; end: number } };
   favorites: number[];
   onToggleFavorite: (pokemonId: number) => void;
-  isLoading: boolean;
   isShinyMode: boolean;
+  onInitiateSearch: () => void;
+  isAllDataFetched: boolean;
+  isFetchingAll: boolean;
+  onPokemonSelect: (pokemon: Pokemon) => void;
 }
 
 const PokedexView = (props: PokedexViewProps) => {
@@ -36,31 +38,39 @@ const PokedexView = (props: PokedexViewProps) => {
     searchQuery,
     pokemonList,
     regionRanges,
+    onInitiateSearch,
+    isAllDataFetched,
   } = props;
 
-  const trimmedQuery = searchQuery.toLowerCase().trim();
-  let filteredPokemon: Pokemon[];
+  useEffect(() => {
+    if (searchQuery.trim() && !isAllDataFetched) {
+      onInitiateSearch();
+    }
+  }, [searchQuery, isAllDataFetched, onInitiateSearch]);
 
-  if (trimmedQuery) {
-    // If there is a search query, search all pokemon, ignoring region and type filters.
-    filteredPokemon = pokemonList.filter(pokemon => {
-      return (
-        pokemon.name.toLowerCase().includes(trimmedQuery) ||
-        String(pokemon.id) === trimmedQuery
+  const filteredPokemon = useMemo(() => {
+    const trimmedQuery = searchQuery.toLowerCase().trim();
+    if (trimmedQuery) {
+      // If there is a search query, search all loaded pokemon.
+      return pokemonList.filter(pokemon => {
+        return (
+          pokemon.name.toLowerCase().includes(trimmedQuery) ||
+          String(pokemon.id) === trimmedQuery
+        );
+      });
+    } else {
+      // Otherwise, apply region and type filters as before.
+      const range = regionRanges[currentRegion] || { start: 0, end: 0 };
+      const regionPokemon = pokemonList.filter(
+        (pokemon) => pokemon.id >= range.start && pokemon.id <= range.end
       );
-    });
-  } else {
-    // Otherwise, apply region and type filters as before.
-    const range = regionRanges[currentRegion] || { start: 0, end: 0 };
-    const regionPokemon = pokemonList.filter(
-      (pokemon) => pokemon.id >= range.start && pokemon.id <= range.end
-    );
-    filteredPokemon = activeTypes.length > 0
-      ? regionPokemon.filter(pokemon =>
-          pokemon.types.some(type => activeTypes.includes(type))
-        )
-      : regionPokemon;
-  }
+      return activeTypes.length > 0
+        ? regionPokemon.filter(pokemon =>
+            pokemon.types.some(type => activeTypes.includes(type))
+          )
+        : regionPokemon;
+    }
+  }, [searchQuery, pokemonList, regionRanges, currentRegion, activeTypes]);
 
   return (
     <div className="app-content">
@@ -70,23 +80,23 @@ const PokedexView = (props: PokedexViewProps) => {
         activeTypes={props.activeTypes}
         onTypeToggle={props.onTypeToggle}
         favoritePokemon={props.favoritePokemon}
-        onPokemonSelect={(p) => props.onPokemonSelect(p, filteredPokemon)}
         totalInRegion={props.totalInRegion}
         caughtInRegion={props.caughtInRegion}
         searchQuery={props.searchQuery}
+        onPokemonSelect={props.onPokemonSelect}
       />
       <PokemonGrid
         region={props.currentRegion}
         filteredPokemon={filteredPokemon}
-        onPokemonSelect={(p) => props.onPokemonSelect(p, filteredPokemon)}
         pokemonStatuses={props.pokemonStatuses}
         onToggleStatus={props.onToggleStatus}
         favorites={props.favorites}
         onToggleFavorite={props.onToggleFavorite}
         searchQuery={props.searchQuery}
         onSearchChange={props.onSearchChange}
-        isLoading={props.isLoading}
         isShinyMode={props.isShinyMode}
+        isFetchingAll={props.isFetchingAll}
+        onPokemonSelect={props.onPokemonSelect}
       />
       <NewsFeed />
     </div>

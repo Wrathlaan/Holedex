@@ -2,7 +2,7 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
-import { Pokemon } from '../../types';
+import { Pokemon } from '../../types.ts';
 
 export const SINNOH_POKEMON: Pokemon[] = [
   { id: 387, name: 'turtwig', types: ['grass'] },
@@ -113,3 +113,5 @@ export const SINNOH_POKEMON: Pokemon[] = [
   { id: 492, name: 'shaymin-land', types: ['grass'] },
   { id: 493, name: 'arceus', types: ['normal'] },
 ];
+
+export default SINNOH_POKEMON;

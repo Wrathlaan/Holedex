@@ -4,7 +4,7 @@
 */
 import React, { useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
-import { Pokemon } from './types';
+import { Pokemon } from './types.ts';
 
 const SHINY_SPRITE_BASE_URL = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/shiny/';
 const HUNTS_STORAGE_KEY = 'holodex-shiny-hunts';

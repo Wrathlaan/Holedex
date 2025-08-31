@@ -2,7 +2,7 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
-import { Pokemon } from '../../types';
+import { Pokemon } from '../../types.ts';
 
 export const KALOS_POKEMON: Pokemon[] = [
   { id: 650, name: 'chespin', types: ['grass'] },
@@ -78,3 +78,5 @@ export const KALOS_POKEMON: Pokemon[] = [
   { id: 720, name: 'hoopa', types: ['psychic', 'ghost'] },
   { id: 721, name: 'volcanion', types: ['fire', 'water'] },
 ];
+
+export default KALOS_POKEMON;

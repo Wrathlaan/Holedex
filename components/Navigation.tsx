@@ -3,14 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
 */
 import React from 'react';
-import { Pokemon } from '../types';
-
-const REGIONS = ['Kanto', 'Johto', 'Hoenn', 'Sinnoh', 'Unova', 'Kalos', 'Alola', 'Galar', 'Hisui', 'Paldea'];
-const POKEMON_TYPES = [
-  'normal', 'fire', 'water', 'electric', 'grass', 'ice', 'fighting', 'poison',
-  'ground', 'flying', 'psychic', 'bug', 'rock', 'ghost', 'dragon', 'dark', 'steel', 'fairy'
-];
-const TYPE_ICON_BASE_URL = 'https://raw.githubusercontent.com/duiker101/pokemon-type-svg-icons/master/icons/';
+import { Pokemon } from '../types.ts';
+import { REGIONS, POKEMON_TYPES, TYPE_ICON_BASE_URL } from '../constants.ts';
 
 interface NavigationProps {
   currentRegion: string;
@@ -18,10 +12,10 @@ interface NavigationProps {
   activeTypes: string[];
   onTypeToggle: (type: string) => void;
   favoritePokemon: Pokemon[];
-  onPokemonSelect: (pokemon: Pokemon) => void;
   totalInRegion: number;
   caughtInRegion: number;
   searchQuery: string;
+  onPokemonSelect: (pokemon: Pokemon) => void;
 }
 
 const Navigation = ({
@@ -30,10 +24,10 @@ const Navigation = ({
   activeTypes,
   onTypeToggle,
   favoritePokemon,
-  onPokemonSelect,
   totalInRegion,
   caughtInRegion,
   searchQuery,
+  onPokemonSelect,
 }: NavigationProps) => {
 
   const caughtPercentage = totalInRegion > 0 ? (caughtInRegion / totalInRegion) * 100 : 0;
@@ -117,9 +111,7 @@ const Navigation = ({
                 tabIndex={0}
                 onClick={() => onPokemonSelect(pokemon)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    onPokemonSelect(pokemon);
-                  }
+                  if (e.key === 'Enter' || e.key === ' ') onPokemonSelect(pokemon);
                 }}
               >
                 {pokemon.name}
