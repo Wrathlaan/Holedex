@@ -14,7 +14,7 @@ interface PokedexViewProps {
   activeTypes: string[];
   onTypeToggle: (type: string) => void;
   favoritePokemon: Pokemon[];
-  onPokemonSelect: (pokemon: Pokemon) => void;
+  onPokemonSelect: (pokemon: Pokemon, context: Pokemon[]) => void;
   totalInRegion: number;
   caughtInRegion: number;
   searchQuery: string;
@@ -30,6 +30,38 @@ interface PokedexViewProps {
 }
 
 const PokedexView = (props: PokedexViewProps) => {
+  const {
+    currentRegion,
+    activeTypes,
+    searchQuery,
+    pokemonList,
+    regionRanges,
+  } = props;
+
+  const trimmedQuery = searchQuery.toLowerCase().trim();
+  let filteredPokemon: Pokemon[];
+
+  if (trimmedQuery) {
+    // If there is a search query, search all pokemon, ignoring region and type filters.
+    filteredPokemon = pokemonList.filter(pokemon => {
+      return (
+        pokemon.name.toLowerCase().includes(trimmedQuery) ||
+        String(pokemon.id) === trimmedQuery
+      );
+    });
+  } else {
+    // Otherwise, apply region and type filters as before.
+    const range = regionRanges[currentRegion] || { start: 0, end: 0 };
+    const regionPokemon = pokemonList.filter(
+      (pokemon) => pokemon.id >= range.start && pokemon.id <= range.end
+    );
+    filteredPokemon = activeTypes.length > 0
+      ? regionPokemon.filter(pokemon =>
+          pokemon.types.some(type => activeTypes.includes(type))
+        )
+      : regionPokemon;
+  }
+
   return (
     <div className="app-content">
       <Navigation
@@ -38,19 +70,17 @@ const PokedexView = (props: PokedexViewProps) => {
         activeTypes={props.activeTypes}
         onTypeToggle={props.onTypeToggle}
         favoritePokemon={props.favoritePokemon}
-        onPokemonSelect={props.onPokemonSelect}
+        onPokemonSelect={(p) => props.onPokemonSelect(p, filteredPokemon)}
         totalInRegion={props.totalInRegion}
         caughtInRegion={props.caughtInRegion}
         searchQuery={props.searchQuery}
       />
       <PokemonGrid
         region={props.currentRegion}
-        activeTypes={props.activeTypes}
-        onPokemonSelect={props.onPokemonSelect}
+        filteredPokemon={filteredPokemon}
+        onPokemonSelect={(p) => props.onPokemonSelect(p, filteredPokemon)}
         pokemonStatuses={props.pokemonStatuses}
         onToggleStatus={props.onToggleStatus}
-        pokemonList={props.pokemonList}
-        regionRanges={props.regionRanges}
         favorites={props.favorites}
         onToggleFavorite={props.onToggleFavorite}
         searchQuery={props.searchQuery}

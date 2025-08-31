@@ -5,8 +5,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { NewsItem } from '../types';
 
-const CORS_PROXY_PREFIX = 'https://corsproxy.io/?';
 const RSS_FEED_URL = 'https://www.youtube.com/feeds/videos.xml?channel_id=UCFctpiB_Hnlk3ejWfHqSm6Q';
+const RSS2JSON_SERVICE_URL = `https://api.rss2json.com/v1/api.json?rss_url=`;
 
 const NewsFeed = () => {
   const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
@@ -17,31 +17,36 @@ const NewsFeed = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const proxiedUrl = `${CORS_PROXY_PREFIX}${encodeURIComponent(RSS_FEED_URL)}`;
-      const response = await fetch(proxiedUrl);
+      const fetchUrl = `${RSS2JSON_SERVICE_URL}${encodeURIComponent(RSS_FEED_URL)}`;
+      const response = await fetch(fetchUrl);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      const xmlString = await response.text();
+      const data = await response.json();
+
+      if (data.status !== 'ok') {
+        throw new Error('Failed to convert RSS feed to JSON.');
+      }
+
+      // Helper to strip HTML from description
+      const stripHtml = (html: string) => {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        return doc.body.textContent || "";
+      };
       
-      const parser = new DOMParser();
-      const xmlDoc = parser.parseFromString(xmlString, "application/xml");
-      const entries = xmlDoc.querySelectorAll("entry");
-      
-      const parsedItems: NewsItem[] = Array.from(entries).map(entry => {
-        const title = entry.querySelector("title")?.textContent || 'No Title';
-        const link = entry.querySelector("link")?.getAttribute('href') || '#';
-        const published = entry.querySelector("published")?.textContent;
+      const parsedItems: NewsItem[] = data.items.map((item: any) => {
+        const title = item.title || 'No Title';
+        const link = item.link || '#';
+        const published = item.pubDate;
         const timestamp = published 
           ? new Date(published).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
           : 'No Date';
           
         const category = 'Official Video';
-
-        const image = entry.querySelector("media\\:thumbnail")?.getAttribute('url') || '';
+        const image = item.thumbnail || '';
         const imageAlt = title;
         
-        const description = entry.querySelector("media\\:description")?.textContent?.trim() || 'No description available.';
+        const description = stripHtml(item.description || '').trim() || 'No description available.';
 
         return {
           category,

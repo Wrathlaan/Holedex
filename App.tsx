@@ -11,8 +11,9 @@ import BattleSimView from './modes/battle_sim/BattleSimView';
 import Profile from './components/Profile';
 import Settings from './components/Settings';
 import ThemeEditor from './components/ThemeEditor';
-import { Pokemon, Theme, AppMode } from './types';
+import { Pokemon, Theme, AppMode, ShinyPokemon } from './types';
 import { POKEMON_LIST_KANTO, POKEMON_LIST_ALL } from './data/pokemon';
+import { SharedShinyCardView } from './components/ShinyCard';
 
 const REGION_RANGES: { [key: string]: { start: number; end: number } } = {
   'Kanto': { start: 1, end: 151 },
@@ -81,6 +82,7 @@ const App = () => {
 
   // Pokedex-specific State
   const [selectedPokemon, setSelectedPokemon] = useState<Pokemon | null>(null);
+  const [pokemonContext, setPokemonContext] = useState<Pokemon[]>([]);
   const [currentRegion, setCurrentRegion] = useState<string>('Kanto');
   const [activeTypes, setActiveTypes] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -99,6 +101,9 @@ const App = () => {
   }, {} as Record<string, RegionFetchState>);
   const [regionFetchStates, setRegionFetchStates] = useState<Record<string, RegionFetchState>>(initialRegionFetchStates);
 
+  // Shared view state
+  const [sharedShinyData, setSharedShinyData] = useState<ShinyPokemon | null>(null);
+
   // Effect to apply the current theme to the document root
   useEffect(() => {
     for (const [key, value] of Object.entries(theme)) {
@@ -106,8 +111,25 @@ const App = () => {
     }
   }, [theme]);
 
-  // Effect for initial data load
+  // Effect for initial data load and shared view routing
   useEffect(() => {
+    // Check for shared shiny card view
+    const params = new URLSearchParams(window.location.search);
+    const view = params.get('view');
+    const data = params.get('data');
+    if (view === 'shiny-card' && data) {
+      try {
+        const shiny = JSON.parse(atob(data));
+        if (shiny.pokemonId && shiny.name) {
+          setSharedShinyData(shiny);
+        }
+      } catch (e) { 
+        console.error("Failed to parse shared shiny data", e);
+        // If parsing fails, remove the query params and load the main app
+        window.history.replaceState(null, '', window.location.pathname);
+      }
+    }
+
     setIsLoading(true);
     // Initialize with local Kanto data
     const kantoPokemon = POKEMON_LIST_KANTO;
@@ -121,12 +143,18 @@ const App = () => {
     setIsLoading(false);
   }, []);
 
-  const handlePokemonSelect = (pokemon: Pokemon) => {
+  const handlePokemonSelect = (pokemon: Pokemon, contextList?: Pokemon[]) => {
     setSelectedPokemon(pokemon);
+    // When a pokemon is selected, we also capture the list it was selected from
+    // to enable next/previous navigation within that context.
+    if (contextList) {
+      setPokemonContext(contextList);
+    }
   };
 
   const handleCloseProfile = () => {
     setSelectedPokemon(null);
+    setPokemonContext([]); // Clear context on close
   }
 
   const handleRegionChange = (region: string) => {
@@ -283,7 +311,7 @@ const App = () => {
           />
         );
       case 'shiny-hunting':
-        return <ShinyHuntingView />;
+        return <ShinyHuntingView pokemonList={pokemonList} />;
       case 'team-builder':
         return <TeamBuilderView />;
       case 'battle-sim':
@@ -312,6 +340,13 @@ const App = () => {
     }
   };
 
+  // If a shared shiny is detected, render only that view.
+  if (sharedShinyData) {
+    const pokemon = POKEMON_LIST_ALL.find(p => p.id === sharedShinyData.pokemonId);
+    if (!pokemon) return <div>Error: Pokémon data not found for shared card.</div>;
+    return <SharedShinyCardView shiny={sharedShinyData} pokemon={pokemon} />;
+  }
+
   return (
     <>
       <TopBar
@@ -328,6 +363,7 @@ const App = () => {
       {selectedPokemon && (
         <Profile
           pokemon={selectedPokemon}
+          pokemonContext={pokemonContext}
           pokemonStatuses={pokemonStatuses}
           onToggleStatus={handleToggleStatus}
           favorites={favorites}

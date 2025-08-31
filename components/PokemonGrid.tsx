@@ -13,12 +13,10 @@ const STAR_URL = 'https://upload.wikimedia.org/wikipedia/commons/2/29/Gold_Star.
 
 interface PokemonGridProps {
   region: string;
-  activeTypes: string[];
+  filteredPokemon: Pokemon[];
   onPokemonSelect: (pokemon: Pokemon) => void;
   pokemonStatuses: Record<number, 'seen' | 'caught'>;
   onToggleStatus: (pokemonId: number) => void;
-  pokemonList: Pokemon[];
-  regionRanges: { [key: string]: { start: number; end: number } };
   favorites: number[];
   onToggleFavorite: (pokemonId: number) => void;
   searchQuery: string;
@@ -29,12 +27,10 @@ interface PokemonGridProps {
 
 const PokemonGrid = ({
   region,
-  activeTypes,
+  filteredPokemon,
   onPokemonSelect,
   pokemonStatuses,
   onToggleStatus,
-  pokemonList,
-  regionRanges,
   favorites,
   onToggleFavorite,
   searchQuery,
@@ -43,29 +39,6 @@ const PokemonGrid = ({
   isShinyMode
 }: PokemonGridProps) => {
   const trimmedQuery = searchQuery.toLowerCase().trim();
-  let filteredPokemon: Pokemon[];
-
-  if (trimmedQuery) {
-    // If there is a search query, search all pokemon, ignoring region and type filters.
-    filteredPokemon = pokemonList.filter(pokemon => {
-      return (
-        pokemon.name.toLowerCase().includes(trimmedQuery) ||
-        String(pokemon.id) === trimmedQuery
-      );
-    });
-  } else {
-    // Otherwise, apply region and type filters as before.
-    const range = regionRanges[region] || { start: 0, end: 0 };
-    const regionPokemon = pokemonList.filter(
-      (pokemon) => pokemon.id >= range.start && pokemon.id <= range.end
-    );
-    filteredPokemon = activeTypes.length > 0
-      ? regionPokemon.filter(pokemon =>
-          pokemon.types.some(type => activeTypes.includes(type))
-        )
-      : regionPokemon;
-  }
-
 
   return (
     <main className="panel grid-panel" aria-labelledby="grid-title">
