@@ -1,40 +1,46 @@
 # Holo-Grid Pokédex
 
-A futuristic Pokédex web application featuring a holographic, "glassmorphism" user interface for browsing and tracking Pokémon from all official regions.
+A futuristic Pokédex web application featuring a holographic, "glassmorphism" user interface for browsing and managing all aspects of your Pokémon journey.
 
 ## Features
 
-- **Futuristic UI**: A responsive, holographic interface with a translucent "glass" theme that is fully customizable.
-- **Complete National Pokédex**: Browse, search, and filter Pokémon from Kanto to Paldea.
-- **On-Demand Data Loading**: The application starts with Kanto data and fetches subsequent regions as needed to ensure a fast initial load.
-- **Global Search**: Instantly find any Pokémon by its name or National Pokédex number.
-- **Advanced Filtering**: Filter the grid by region and Pokémon type.
-- **Progress Tracking**: Mark Pokémon as "Seen" or "Caught" and track your collection progress for each region.
-- **Detailed Profiles**: View in-depth information for each Pokémon, including:
-  - High-resolution sprites (with a shiny toggle).
-  - Pokédex entries from the games.
-  - A visual stats radar chart.
-  - The complete evolution chain with evolution methods.
-  - Authentic Pokémon cries.
-- **Favorites System**: Mark your favorite Pokémon for quick access from the navigation panel.
-- **Live News Feed**: Stay updated with the latest videos from the official Pokémon YouTube channel.
-- **Powerful Theme Editor**:
-  - Customize every color, font, and background image in the UI.
-  - Save your custom themes as presets.
-  - Load built-in and user-created presets.
-  - Import and export themes as JSON files to share with others.
+-   **Futuristic UI**: A responsive, holographic interface with a translucent "glass" theme.
+-   **Complete National Pokédex**: Browse, search, and filter Pokémon from Kanto to Paldea. Detailed profiles include sprites (with shiny toggle), stats, evolution chains, and authentic cries.
+-   **Progress Tracking**: Mark Pokémon as "Seen" or "Caught" and track your collection progress for each region.
+-   **Advanced Filtering**: Filter the Pokédex grid by region and Pokémon type.
+-   **Favorites System**: Mark your favorite Pokémon for quick access.
+-   **Shiny Hunting Mode**: A dedicated interface for tracking shiny hunts. Features include:
+    -   Multiple concurrent hunts.
+    -   Encounter counters and odds calculators (with Shiny Charm support).
+    -   A "Trophy Case" to log and display all your shiny Pokémon.
+    -   Shareable shiny cards and a real-time streamer overlay.
+-   **Team Builder Mode**: Create and manage competitive teams.
+    -   **Gemini-Powered Build Suggestions**: Instantly generate a full competitive build (moves, ability, item, nature, EVs) for any Pokémon on your team.
+-   **In-Depth Training Mode**:
+    -   **Gemini-Powered Training Plans**: Generate a complete competitive training plan for any Pokémon, including an analysis, EV spread, and an in-game guide for training in the latest games.
+    -   **Stat Scanner**: Use your device's camera or upload a screenshot to automatically extract a Pokémon's stats, nature, IVs, and more using Gemini's multimodal capabilities.
+-   **Item & Move Dex**:
+    -   Browse, search, and filter a comprehensive database of all items and moves.
+    -   Beautifully designed master-detail interfaces for easy navigation.
+    -   **Gemini-Powered Insights**: The Move Dex shows "Notable Users" for each move, suggesting Pokémon known for using it effectively.
+-   **Settings & Configuration**:
+    -   Configure your connection to the Gemini API using either an API Key or Google OAuth 2.0.
+    -   Customize the app's appearance with theme and text size options.
+-   **Live News Feed**: Stay updated with the latest videos from the official Pokémon YouTube channel.
 
 ## Tech Stack
 
-- **React 19**: For building the user interface.
-- **TypeScript**: For type safety and improved developer experience.
-- **Modern CSS**: Extensive use of CSS Custom Properties (Variables) for dynamic theming, along with Flexbox and Grid for layout.
-- **No Build Step**: The project uses ES Modules directly in the browser via `importmap` for a simple, dependency-free setup.
+-   **React 19**: For building the user interface.
+-   **TypeScript**: For type safety and improved developer experience.
+-   **@google/genai**: The Google Gemini SDK for powering intelligent, generative AI features.
+-   **Modern CSS**: Extensive use of CSS Custom Properties (Variables) for dynamic theming, along with Flexbox and Grid for layout.
+-   **No Build Step**: The project uses ES Modules directly in the browser via `importmap` for a simple, dependency-free setup.
 
 ## Data Sources
 
-- **Pokémon Data**: Core data (ID, name, types) is stored locally within the `data/` directory. Detailed profile information (Pokédex entries, stats, evolution chains) is fetched from the [PokéAPI](https://pokeapi.co/).
-- **News Feed**: The news panel is powered by the RSS feed from the [Official Pokémon YouTube Channel](https://www.youtube.com/c/pokemon).
+-   **Pokémon Data**: Core data is stored locally. Detailed profile information is fetched from the [PokéAPI](https://pokeapi.co/).
+-   **AI Features**: Powered by the Google Gemini API.
+-   **News Feed**: Powered by the RSS feed from the [Official Pokémon YouTube Channel](https://www.youtube.com/c/pokemon).
 
 ## Getting Started
 
@@ -66,19 +72,24 @@ This project is configured to run without any build tools like Webpack or Vite.
 
 ```
 .
-├── components/         # Reusable React components
-│   ├── Navigation.tsx
-│   ├── PokemonGrid.tsx
-│   ├── Profile.tsx
+├── components/         # Common reusable components
 │   └── ...
 ├── data/               # Static Pokémon data
-│   ├── regions/        # Data separated by region
-│   └── pokemon.ts      # Aggregates all regional data
-├── App.tsx             # Main application component, manages state
+├── hooks/              # Custom React hooks for logic and state
+├── lib/                # Core logic (Gemini API, prompts)
+├── modes/              # Top-level components for each app mode
+│   ├── item_dex/
+│   ├── move_dex/
+│   ├── pokedex/
+│   ├── shiny_hunting/
+│   ├── team_builder/
+│   └── training/
+├── App.tsx             # Main application component, manages state and views
 ├── index.css           # Global styles and theme variables
 ├── index.html          # HTML entry point with importmap
 ├── index.tsx           # React root renderer
 ├── README.md           # This file
+├── CHANGELOG.md        # Version history
 └── types.ts            # TypeScript type definitions
 ```
 

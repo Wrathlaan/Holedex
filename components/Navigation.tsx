@@ -4,13 +4,11 @@
 */
 import React from 'react';
 import { Pokemon } from '../types.ts';
-import { REGIONS, POKEMON_TYPES, TYPE_ICON_BASE_URL } from '../constants.ts';
+import { REGIONS } from '../constants.ts';
 
 interface NavigationProps {
   currentRegion: string;
   onRegionChange: (region: string) => void;
-  activeTypes: string[];
-  onTypeToggle: (type: string) => void;
   favoritePokemon: Pokemon[];
   totalInRegion: number;
   caughtInRegion: number;
@@ -21,8 +19,6 @@ interface NavigationProps {
 const Navigation = ({
   currentRegion,
   onRegionChange,
-  activeTypes,
-  onTypeToggle,
   favoritePokemon,
   totalInRegion,
   caughtInRegion,
@@ -78,34 +74,12 @@ const Navigation = ({
       </div>
 
       <div className={`nav-panel-scrollable-content ${isSearchActive ? 'disabled' : ''}`}>
-        <h3 className="filter-title">Filter by Type</h3>
-        <div className="type-filter-grid">
-          {POKEMON_TYPES.map(type => (
-            <img
-              key={type}
-              src={`${TYPE_ICON_BASE_URL}${type}.svg`}
-              alt={`Filter by ${type} type`}
-              title={type.charAt(0).toUpperCase() + type.slice(1)}
-              className={`type-icon type-filter-icon type-${type} ${activeTypes.includes(type) ? 'active' : ''}`}
-              role="checkbox"
-              aria-checked={activeTypes.includes(type)}
-              tabIndex={isSearchActive ? -1 : 0}
-              onClick={isSearchActive ? undefined : () => onTypeToggle(type)}
-              onKeyDown={(e) => {
-                if (!isSearchActive && (e.key === 'Enter' || e.key === ' ')) {
-                  onTypeToggle(type);
-                }
-              }}
-            />
-          ))}
-        </div>
-
         <h3 className="favorites-title">Favorites</h3>
         <div className="favorites-list">
           {favoritePokemon.length > 0 ? (
             favoritePokemon.map(pokemon => (
               <div
-                key={pokemon.id}
+                key={pokemon.name}
                 className="favorite-item"
                 role="button"
                 tabIndex={0}

@@ -1,0 +1,719 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+*/
+
+/* --- SHINY HUNTING MODE --- */
+.shiny-view-container {
+  display: grid;
+  grid-template-columns: 280px 1fr 320px;
+  gap: 1rem;
+  align-items: stretch;
+}
+.current-hunts-panel, .hunt-manager, .trophy-case-panel {
+  display: flex;
+  flex-direction: column;
+}
+.hunt-active-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+.hunt-target-display {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+}
+.hunt-target-display h3 {
+  font-size: 1.5rem;
+  color: var(--shiny-glow-color);
+  text-transform: capitalize;
+  margin: 0;
+  padding-bottom: 0.5rem;
+}
+.hunt-sprite-comparison {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+}
+.sprite-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  background: rgba(var(--panel-light-rgb), 0.3);
+  padding: 0.75rem;
+  border-radius: var(--glass-radius);
+  border: var(--glass-border);
+  transition: all 0.2s ease;
+}
+.sprite-container:hover {
+  background: rgba(var(--panel-light-rgb), 0.6);
+  transform: translateY(-2px);
+  box-shadow: 0 0 8px var(--accent-color-translucent);
+}
+.hunt-sprite {
+  width: 90px;
+  height: 90px;
+  object-fit: contain;
+}
+.hunt-sprite.shiny {
+  filter: drop-shadow(0 0 8px var(--shiny-glow-color));
+}
+.sprite-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+.hunt-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+}
+.encounter-counter-wrapper {
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: transform 0.1s ease-out;
+}
+.encounter-counter-wrapper:active {
+  transform: scale(0.95);
+}
+.encounter-counter-wrapper.popping .encounter-count {
+  animation: pop-effect 0.2s ease-out;
+}
+.encounter-count {
+  font-size: 4rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-shadow: 0 0 8px var(--accent-color-translucent);
+}
+.counter-btn-group {
+  display: flex;
+  gap: 1rem;
+}
+.counter-btn-group button {
+  width: 50px;
+  height: 50px;
+  font-size: 2rem;
+  border-radius: 50%;
+  border: var(--glass-border);
+  background: var(--glass-bg-interactive);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.counter-btn-group button:hover {
+  background: var(--glass-bg-interactive-focus);
+  border-color: var(--accent-color);
+}
+.hunt-method-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+.hunt-method-selector .region-select {
+  flex-grow: 1;
+  font-size: 0.9rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+.odds-probability-display {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  background: rgba(var(--panel-light-rgb), 0.3);
+  padding: 1rem;
+  border-radius: var(--glass-radius);
+  border: var(--glass-border);
+}
+.odds-probability-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.9rem;
+}
+.odds-probability-item span:first-child {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+.odds-probability-item .value {
+  color: var(--text-primary);
+  font-weight: 700;
+  font-size: 1rem;
+}
+.odds-probability-item.cumulative .value {
+  color: var(--shiny-glow-color);
+  font-size: 1.1rem;
+  text-shadow: 0 0 5px var(--shiny-glow-color);
+}
+.hunt-actions {
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+}
+.hunt-actions .fetch-data-btn {
+  background-color: var(--shiny-glow-color);
+  color: var(--background-dark);
+}
+.hunt-actions .fetch-data-btn:hover:not(:disabled) {
+  background-color: #ffe64d;
+  box-shadow: 0 0 12px var(--shiny-glow-color);
+}
+.trophy-case-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.75rem;
+}
+.trophy-case-header h2 {
+  margin: 0;
+  border: none;
+  padding: 0;
+  text-align: left;
+}
+.add-shiny-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  background-color: var(--glass-bg-interactive);
+}
+.add-shiny-btn:hover {
+  background-color: var(--glass-bg-interactive-focus);
+  border-color: var(--accent-color);
+}
+.trophy-case-grid {
+  overflow-y: auto;
+  padding: 0.5rem;
+  margin: -0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  justify-content: center;
+  align-content: flex-start;
+}
+.trophy-card {
+  width: 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.75rem 0.5rem;
+  border: var(--glass-border);
+  border-radius: var(--glass-radius);
+  background: linear-gradient(145deg, rgba(var(--panel-light-rgb), 0.4), rgba(var(--panel-dark-rgb), 0.6));
+  backdrop-filter: var(--glass-backdrop-blur);
+  animation: card-entry 0.5s ease-out forwards;
+  box-shadow: 0 0 15px -5px var(--shiny-glow-color);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  will-change: transform, box-shadow;
+}
+.trophy-card:hover {
+  transform: scale(1.05) translateY(-4px);
+  box-shadow: 0 0 25px var(--shiny-glow-color);
+}
+.trophy-delete-btn {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  background: rgba(var(--panel-dark-rgb), 0.5);
+  border: none;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.2s ease;
+  color: var(--text-secondary);
+}
+.trophy-card:hover .trophy-delete-btn {
+  opacity: 0.7;
+}
+.trophy-delete-btn:hover {
+  opacity: 1;
+  background-color: var(--team-builder-color);
+  color: var(--text-primary);
+  transform: scale(1.1);
+}
+.trophy-share-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: all 0.2s ease;
+}
+.trophy-share-btn svg {
+  width: 18px;
+  height: 18px;
+  fill: var(--text-secondary);
+}
+.trophy-card:hover .trophy-share-btn {
+  opacity: 1;
+}
+.trophy-share-btn:hover svg {
+  fill: var(--accent-color);
+  filter: drop-shadow(0 0 4px var(--accent-color));
+}
+.trophy-nickname {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--shiny-glow-color);
+  text-shadow: 0 0 5px var(--shiny-glow-color);
+  margin-bottom: 0.25rem;
+  text-align: center;
+  font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  padding: 0 0.25rem;
+}
+.trophy-card .pokemon-card-sprite {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 0.25rem;
+}
+.trophy-card .pokemon-card-name {
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+}
+.trophy-card.has-nickname .pokemon-card-name {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+.trophy-card-info {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  padding: 0 0.25rem;
+}
+.trophy-card-detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--border-color);
+  padding-top: 0.35rem;
+}
+.trophy-card-info > div:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+.trophy-card-label {
+  color: var(--text-secondary);
+}
+.trophy-card-value {
+  color: var(--text-primary);
+  font-weight: 500;
+  text-align: right;
+}
+.hunt-list {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  overflow-y: auto;
+}
+.hunt-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--glass-radius);
+  border: 1px solid var(--border-color);
+  background-color: var(--glass-bg-interactive);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  animation: card-entry 0.5s ease-out backwards;
+}
+.hunt-item:hover {
+  background-color: var(--glass-bg-interactive-focus);
+  border-color: var(--accent-color);
+}
+.hunt-item.active {
+  border-color: var(--shiny-glow-color);
+  box-shadow: 0 0 10px var(--shiny-glow-color);
+}
+.hunt-item-sprite {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  flex-shrink: 0;
+  background: rgba(0,0,0,0.2);
+  border-radius: 50%;
+}
+.hunt-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  overflow: hidden;
+  flex-grow: 1;
+}
+.hunt-item-name {
+  font-weight: 500;
+  text-transform: capitalize;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+.hunt-item-count {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+.hunt-item-delete-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(var(--panel-dark-rgb), 0.5);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 20px;
+  text-align: center;
+  opacity: 0.6;
+  transition: all 0.2s ease;
+}
+.hunt-item:hover .hunt-item-delete-btn {
+  opacity: 1;
+}
+.hunt-item-delete-btn:hover {
+  background: var(--team-builder-color);
+  color: var(--text-primary);
+  transform: scale(1.1);
+}
+.milestone-sparkles-container {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+  z-index: 10;
+}
+.sparkle {
+  position: absolute;
+  top: -10px; /* offset for emoji size */
+  left: -10px;
+  width: 20px;
+  height: 20px;
+  opacity: 0;
+  animation-name: sparkle-effect;
+  animation-timing-function: ease-in-out;
+  animation-fill-mode: forwards;
+}
+.sparkle::before {
+  content: '✨';
+  position: absolute;
+  font-size: 20px;
+  filter: drop-shadow(0 0 5px var(--shiny-glow-color));
+}
+.add-shiny-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 2rem;
+  color: var(--text-primary);
+}
+.add-shiny-title {
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  position: relative;
+}
+.form-group.full-width {
+  grid-column: 1 / -1;
+}
+.form-group label {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+.form-group input, .form-group select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: var(--glass-radius);
+  border: var(--glass-border);
+  background-color: var(--glass-bg-interactive);
+  backdrop-filter: var(--glass-backdrop-blur);
+  -webkit-backdrop-filter: var(--glass-backdrop-blur);
+  color: var(--text-primary);
+  font-size: 1rem;
+}
+.form-group input:focus, .form-group select:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 8px var(--accent-color-translucent);
+  background-color: var(--glass-bg-interactive-focus);
+}
+.add-shiny-controls {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.shiny-charm-toggle-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+}
+.graph-toggle-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-color);
+}
+.graph-toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+.graph-toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.graph-toggle-switch .slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--panel-dark);
+  border: 1px solid var(--border-color);
+  transition: .4s;
+  border-radius: 24px;
+}
+.graph-toggle-switch .slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 3px;
+  bottom: 3px;
+  background-color: var(--text-secondary);
+  transition: .4s;
+  border-radius: 50%;
+}
+.graph-toggle-switch input:checked + .slider {
+  background-color: var(--accent-color-translucent);
+  border-color: var(--accent-color);
+}
+.graph-toggle-switch input:checked + .slider:before {
+  transform: translateX(20px);
+  background-color: var(--accent-color);
+}
+.probability-graph-container {
+  margin-top: 1rem;
+  width: 100%;
+}
+.graph-svg {
+  width: 100%;
+  height: auto;
+}
+.graph-axis, .graph-gridline {
+  stroke: var(--border-color);
+  stroke-width: 1;
+}
+.graph-gridline {
+  stroke-dasharray: 2, 3;
+}
+.graph-label {
+  font-size: 9px;
+  fill: var(--text-secondary);
+  font-weight: 500;
+}
+.graph-curve {
+  fill: none;
+  stroke: var(--shiny-glow-color);
+  stroke-width: 2;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 3px var(--shiny-glow-color));
+}
+.graph-marker {
+  fill: var(--shiny-glow-color);
+  stroke: var(--background-dark);
+  stroke-width: 1.5;
+  filter: drop-shadow(0 0 5px var(--shiny-glow-color));
+}
+.shared-shiny-card-view {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: var(--background-dark) var(--background-image-url);
+}
+.share-shiny-modal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 2rem;
+  align-items: center;
+}
+.shiny-card {
+  width: 400px;
+  padding: 1.5rem;
+  border-radius: 12px;
+  background-image: var(--bg-gradient);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  color: #fff;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+.shiny-card-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+}
+.shiny-card-sprite {
+  width: 120px;
+  height: 120px;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.7));
+}
+.shiny-card-name-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.shiny-card-pokemon-name {
+  font-size: 2rem;
+  font-weight: bold;
+  text-transform: capitalize;
+}
+.shiny-card-nickname {
+  font-size: 1.25rem;
+  font-style: italic;
+  opacity: 0.9;
+}
+.shiny-card-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem 1.5rem;
+  width: 100%;
+  padding-top: 1rem;
+  margin-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+.shiny-card-detail {
+  display: flex;
+  flex-direction: column;
+}
+.shiny-card-detail-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  opacity: 0.8;
+  font-weight: 500;
+}
+.shiny-card-detail-value {
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+.share-shiny-controls {
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+  justify-content: center;
+}
+.overlay-url-modal-content {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1rem;
+}
+.overlay-url-modal-content h3 {
+  font-size: 1.5rem;
+}
+.overlay-url-modal-content p {
+  color: var(--text-secondary);
+}
+.overlay-url-display {
+  background: var(--panel-dark);
+  padding: 0.75rem 1rem;
+  border-radius: var(--glass-radius);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-family: monospace;
+  word-break: break-all;
+}
+
+
+@media (max-width: 1024px) {
+  .shiny-view-container {
+    grid-template-columns: 240px 1fr;
+    grid-template-rows: auto auto;
+  }
+  .hunt-manager {
+    grid-column: 1 / -1;
+    order: -1;
+  }
+}
+
+@media (max-width: 768px) {
+  .shiny-view-container {
+    display: flex;
+    flex-direction: column;
+  }
+}

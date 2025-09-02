@@ -121,7 +121,7 @@ const PokedexEntryPage: React.FC<PokedexEntryPageProps> = ({ pokemon, onClose, f
   const [selectedVersionIndex, setSelectedVersionIndex] = useState(0);
   
   // Main Tab State
-  const [activeTab, setActiveTab] = useState<'overview' | 'stats' | 'moves' | 'forms'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'stats' | 'moves'>('overview');
   
   // Moves Tab State
   const [selectedVersionGroup, setSelectedVersionGroup] = useState('');
@@ -356,6 +356,11 @@ const PokedexEntryPage: React.FC<PokedexEntryPageProps> = ({ pokemon, onClose, f
   return (
     <div className="entry-page-container">
       <header className="entry-page-header">
+        <button className="entry-page-back-btn" onClick={onClose} title="Back to Pokédex">
+            <svg viewBox="0 0 24 24">
+                <path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+            </svg>
+        </button>
         <div className="entry-page-title-group">
           <div className="entry-page-name-wrapper">
             <h1>{currentName}</h1>
@@ -372,6 +377,24 @@ const PokedexEntryPage: React.FC<PokedexEntryPageProps> = ({ pokemon, onClose, f
               />
             ))}
           </div>
+        </div>
+        <div className="entry-page-center-nav">
+          <button
+            className="header-nav-btn prev"
+            onClick={() => prevPokemon && onPokemonSelect(prevPokemon)}
+            disabled={!prevPokemon}
+            title={prevPokemon ? `Previous: ${prevPokemon.name}` : 'First Pokémon'}
+          >
+            <span>&#9664; Prev</span>
+          </button>
+          <button
+            className="header-nav-btn next"
+            onClick={() => nextPokemon && onPokemonSelect(nextPokemon)}
+            disabled={!nextPokemon}
+            title={nextPokemon ? `Next: ${nextPokemon.name}` : 'Last Pokémon'}
+          >
+            <span>Next &#9654;</span>
+          </button>
         </div>
         <div className="entry-page-header-actions">
           <button className="icon-action-btn" onClick={() => onToggleStatus(speciesId)} title={`Status: ${isCaught ? 'Caught' : 'Seen'}`}>
@@ -438,6 +461,28 @@ const PokedexEntryPage: React.FC<PokedexEntryPageProps> = ({ pokemon, onClose, f
                   ))}
                 </div>
               </div>
+              {details.varieties && details.varieties.length > 1 && (
+                <div className="forms-section">
+                  <h3 className="forms-section-title">Alternate Forms</h3>
+                  <div className="forms-toggle-list">
+                      {details.varieties.map(variant => {
+                          const variantUrl = variant.pokemon.url;
+                          const isActive = variantUrl === activeFormUrl;
+                          return (
+                              <button
+                                  key={variant.pokemon.name}
+                                  className={`form-toggle-btn ${isActive ? 'active' : ''}`}
+                                  onClick={() => setActiveFormUrl(variantUrl)}
+                                  disabled={isActive}
+                                  aria-pressed={isActive}
+                              >
+                                  {formatFormName(variant.pokemon.name)}
+                              </button>
+                          );
+                      })}
+                  </div>
+                </div>
+              )}
             </>
           )}
         </section>
@@ -448,9 +493,6 @@ const PokedexEntryPage: React.FC<PokedexEntryPageProps> = ({ pokemon, onClose, f
             <button className={`tab-btn ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')} role="tab" aria-selected={activeTab === 'overview'}>Overview</button>
             <button className={`tab-btn ${activeTab === 'stats' ? 'active' : ''}`} onClick={() => setActiveTab('stats')} role="tab" aria-selected={activeTab === 'stats'}>Stats</button>
             <button className={`tab-btn ${activeTab === 'moves' ? 'active' : ''}`} onClick={() => setActiveTab('moves')} role="tab" aria-selected={activeTab === 'moves'}>Moves</button>
-            {details && details.varieties && details.varieties.length > 1 && (
-              <button className={`tab-btn ${activeTab === 'forms' ? 'active' : ''}`} onClick={() => setActiveTab('forms')} role="tab" aria-selected={activeTab === 'forms'}>Forms</button>
-            )}
         </nav>
 
         {activeTab === 'overview' && (
@@ -622,77 +664,7 @@ const PokedexEntryPage: React.FC<PokedexEntryPageProps> = ({ pokemon, onClose, f
                 ) : <div className="info-panel-placeholder">No move data available for this Pokémon.</div>}
             </div>
         )}
-
-        {activeTab === 'forms' && (
-          <div className="entry-page-tab-content" role="tabpanel">
-            {details?.varieties && details.varieties.length > 1 ? (
-              <div className="forms-grid">
-                {details.varieties.map(variant => {
-                  const variantUrl = variant.pokemon.url;
-                  const isActive = variantUrl === activeFormUrl;
-                  const spriteId = variantUrl.split('/').slice(-2)[0];
-                  return (
-                    <button
-                      key={variant.pokemon.name}
-                      className={`form-selector-btn ${isActive ? 'active' : ''}`}
-                      onClick={() => setActiveFormUrl(variantUrl)}
-                      disabled={isActive}
-                      aria-pressed={isActive}
-                    >
-                      <img src={`${SPRITE_BASE_URL}${spriteId}.png`} alt={variant.pokemon.name} className="form-selector-sprite" />
-                      <span className="form-selector-name">{formatFormName(variant.pokemon.name)}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            ) : <div className="info-panel-placeholder">This Pokémon has no alternate forms.</div>}
-          </div>
-        )}
       </div>
-
-      <footer className="entry-page-footer">
-        <button
-          className="footer-nav-btn prev"
-          onClick={() => prevPokemon && onPokemonSelect(prevPokemon)}
-          disabled={!prevPokemon}
-          title={prevPokemon ? `Previous: ${prevPokemon.name}` : 'First Pokémon'}
-        >
-          {prevPokemon && (
-            <>
-              <span>&#9664;</span>
-              <img src={`${SPRITE_BASE_URL}${prevPokemon.id}.png`} alt={prevPokemon.name} />
-              <div>
-                <span>#{String(prevPokemon.id).padStart(4, '0')}</span>
-                <span>{prevPokemon.name}</span>
-              </div>
-            </>
-          )}
-        </button>
-
-        <button className="footer-home-btn" onClick={onClose} title="Back to Pokédex">
-          <svg viewBox="0 0 24 24">
-            <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,11.5A1.5,1.5 0 0,0 10.5,13A1.5,1.5 0 0,0 12,14.5A1.5,1.5 0 0,0 13.5,13A1.5,1.5 0 0,0 12,11.5M12,10H20V12H12A2,2 0 0,0 10,10V12H4V10H12Z" />
-          </svg>
-        </button>
-
-        <button
-          className="footer-nav-btn next"
-          onClick={() => nextPokemon && onPokemonSelect(nextPokemon)}
-          disabled={!nextPokemon}
-          title={nextPokemon ? `Next: ${nextPokemon.name}` : 'Last Pokémon'}
-        >
-          {nextPokemon && (
-            <>
-              <div>
-                <span>#{String(nextPokemon.id).padStart(4, '0')}</span>
-                <span>{nextPokemon.name}</span>
-              </div>
-              <img src={`${SPRITE_BASE_URL}${nextPokemon.id}.png`} alt={nextPokemon.name} />
-              <span>&#9654;</span>
-            </>
-          )}
-        </button>
-      </footer>
     </div>
   );
 };

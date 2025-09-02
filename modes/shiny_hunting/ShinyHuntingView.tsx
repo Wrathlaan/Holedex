@@ -6,6 +6,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Pokemon, ShinyPokemon, Hunt } from '../../types.ts';
 import ProbabilityGraph from './ProbabilityGraph.tsx';
 import { ShareShinyModal } from '../../components/ShinyCard.tsx';
+import './shiny_hunting.css';
 
 const SPRITE_BASE_URL = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/';
 const SHINY_SPRITE_BASE_URL = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/shiny/';
@@ -54,7 +55,6 @@ interface ShinyHuntingViewProps {
   hunts: Hunt[];
   activeHuntId: number | null;
   hasShinyCharm: boolean;
-  onAddHunt: (pokemon: Pokemon) => void;
   onDeleteHunt: (huntId: number) => void;
   onUpdateHunt: (huntId: number, updates: Partial<Omit<Hunt, 'id' | 'target'>>) => void;
   onSetActiveHunt: (huntId: number | null) => void;
@@ -66,13 +66,11 @@ const ShinyHuntingView = ({
   hunts,
   activeHuntId,
   hasShinyCharm,
-  onAddHunt,
   onDeleteHunt,
   onUpdateHunt,
   onSetActiveHunt,
   onSetHasShinyCharm,
 }: ShinyHuntingViewProps) => {
-  const [searchQuery, setSearchQuery] = useState('');
   const [showMilestoneEffect, setShowMilestoneEffect] = useState(false);
   const [showLogShinyEffect, setShowLogShinyEffect] = useState(false);
   const [modalState, setModalState] = useState<ModalState>({ isOpen: false });
@@ -118,16 +116,7 @@ const ShinyHuntingView = ({
   }, [showLogShinyEffect]);
   
   const activeHunt = useMemo(() => hunts.find(h => h.id === activeHuntId), [activeHuntId, hunts]);
-  const searchResults = useMemo(() => {
-    if (!searchQuery) return [];
-    return pokemonList.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 10);
-  }, [searchQuery, pokemonList]);
   
-  const handleAddHuntFromSearch = (pokemon: Pokemon) => {
-    onAddHunt(pokemon);
-    setSearchQuery('');
-  };
-
   const handleAddShiny = (shiny: Omit<ShinyPokemon, 'id' | 'name'>) => {
     const pokemon = pokemonList.find(p => p.id === shiny.pokemonId);
     if (!pokemon) return;
@@ -199,10 +188,6 @@ const ShinyHuntingView = ({
       {/* Column 1: Hunts List */}
       <aside className="panel current-hunts-panel">
         <h2>Current Hunts</h2>
-        <div className="hunt-search">
-          <input type="text" placeholder="Search to add a new hunt..." className="search-input" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
-          {searchResults.length > 0 && <ul className="hunt-search-results">{searchResults.map(p => <li key={p.id} onClick={() => handleAddHuntFromSearch(p)}>{p.name}</li>)}</ul>}
-        </div>
         <div className="hunt-list">
           {hunts.length > 0 ? hunts.map(hunt => (
             <div key={hunt.id} className={`hunt-item ${hunt.id === activeHuntId ? 'active' : ''}`} onClick={() => onSetActiveHunt(hunt.id)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onSetActiveHunt(hunt.id); }}>
@@ -349,12 +334,10 @@ const AddEditShinyModal = ({ isOpen, initialData, pokemonList, onSave, onClose }
                 <button className="modal-close-button" onClick={onClose}>&times;</button>
                 <form className="add-shiny-form" onSubmit={handleSubmit}>
                     <h3 className="add-shiny-title">{initialData?.pokemonId ? 'Log Shiny' : 'Add Shiny'}</h3>
-                    <div className="form-group full-width">
+                    <div className="form-group full-width hunt-search">
                         <label>Pokémon *</label>
-                        <div className="hunt-search">
-                            <input type="text" placeholder="Search Pokémon..." value={search} onChange={e => { setSearch(e.target.value); if(pokemon) setPokemon(null); }} required disabled={!!initialData?.pokemonId} />
-                            {searchResults.length > 0 && <ul className="hunt-search-results">{searchResults.map(p => <li key={p.id} onClick={() => handleSelectPokemon(p)}>{p.name}</li>)}</ul>}
-                        </div>
+                        <input type="text" placeholder="Search Pokémon..." value={search} onChange={e => { setSearch(e.target.value); if(pokemon) setPokemon(null); }} required disabled={!!initialData?.pokemonId} />
+                        {searchResults.length > 0 && <ul className="search-results-dropdown" style={{position: 'absolute', top: '100%'}}>{searchResults.map(p => <li key={p.id} onClick={() => handleSelectPokemon(p)}>{p.name}</li>)}</ul>}
                     </div>
                     <div className="form-grid">
                         <div className="form-group"><label>Nickname</label><input type="text" value={nickname} onChange={e => setNickname(e.target.value)} /></div>

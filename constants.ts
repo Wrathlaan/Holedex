@@ -7,7 +7,7 @@
 export const SPRITE_BASE_URL = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/';
 export const SHINY_SPRITE_BASE_URL = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/shiny/';
 export const TYPE_ICON_BASE_URL = 'https://raw.githubusercontent.com/duiker101/pokemon-type-svg-icons/master/icons/';
-export const POKEBALL_URL = 'https://upload.wikimedia.org/wikipedia/commons/5/53/Pok%C3%A9_Ball_icon.svg';
+export const POKEBALL_URL = 'https://www.pngmart.com/files/2/Pokeball-PNG-Transparent-Image.png';
 export const STAR_URL = 'https://upload.wikimedia.org/wikipedia/commons/2/29/Gold_Star.svg';
 export const CRY_BASE_URL = 'https://raw.githubusercontent.com/PokeAPI/cries/main/cries/pokemon/latest/';
 

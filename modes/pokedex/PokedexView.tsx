@@ -2,11 +2,12 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
-import React, { useMemo, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import Navigation from '../../components/Navigation.tsx';
 import PokemonGrid from '../../components/PokemonGrid.tsx';
 import NewsFeed from '../../components/NewsFeed.tsx';
 import { Pokemon } from '../../types.ts';
+import './pokedex.css';
 
 interface PokedexViewProps {
   currentRegion: string;
@@ -17,7 +18,6 @@ interface PokedexViewProps {
   totalInRegion: number;
   caughtInRegion: number;
   searchQuery: string;
-  onSearchChange: (query: string) => void;
   pokemonStatuses: Record<number, 'seen' | 'caught'>;
   onToggleStatus: (pokemonId: number) => void;
   pokemonList: Pokemon[];
@@ -25,9 +25,7 @@ interface PokedexViewProps {
   favorites: number[];
   onToggleFavorite: (pokemonId: number) => void;
   isShinyMode: boolean;
-  onInitiateSearch: () => void;
-  isAllDataFetched: boolean;
-  isFetchingAll: boolean;
+  onToggleShinyMode: () => void;
   onPokemonSelect: (pokemon: Pokemon) => void;
 }
 
@@ -38,15 +36,7 @@ const PokedexView = (props: PokedexViewProps) => {
     searchQuery,
     pokemonList,
     regionRanges,
-    onInitiateSearch,
-    isAllDataFetched,
   } = props;
-
-  useEffect(() => {
-    if (searchQuery.trim() && !isAllDataFetched) {
-      onInitiateSearch();
-    }
-  }, [searchQuery, isAllDataFetched, onInitiateSearch]);
 
   const filteredPokemon = useMemo(() => {
     const trimmedQuery = searchQuery.toLowerCase().trim();
@@ -77,8 +67,6 @@ const PokedexView = (props: PokedexViewProps) => {
       <Navigation
         currentRegion={props.currentRegion}
         onRegionChange={props.onRegionChange}
-        activeTypes={props.activeTypes}
-        onTypeToggle={props.onTypeToggle}
         favoritePokemon={props.favoritePokemon}
         totalInRegion={props.totalInRegion}
         caughtInRegion={props.caughtInRegion}
@@ -93,10 +81,12 @@ const PokedexView = (props: PokedexViewProps) => {
         favorites={props.favorites}
         onToggleFavorite={props.onToggleFavorite}
         searchQuery={props.searchQuery}
-        onSearchChange={props.onSearchChange}
         isShinyMode={props.isShinyMode}
-        isFetchingAll={props.isFetchingAll}
+        onToggleShinyMode={props.onToggleShinyMode}
+        isFetchingAll={false} // No longer fetching
         onPokemonSelect={props.onPokemonSelect}
+        activeTypes={props.activeTypes}
+        onTypeToggle={props.onTypeToggle}
       />
       <NewsFeed />
     </div>

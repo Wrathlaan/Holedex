@@ -26,9 +26,10 @@ const PokemonCard = ({
   onSelect,
 }: PokemonCardProps) => {
   const isCaught = status === 'caught';
+  const spriteId = pokemon.spriteId || pokemon.id;
   const spriteUrl = isShinyMode
-    ? `${SHINY_SPRITE_BASE_URL}${pokemon.id}.png`
-    : `${SPRITE_BASE_URL}${pokemon.id}.png`;
+    ? `${SHINY_SPRITE_BASE_URL}${spriteId}.png`
+    : `${SPRITE_BASE_URL}${spriteId}.png`;
 
   const typeStyles = {
       '--type-color-1': `var(--type-${pokemon.types[0]})`,
